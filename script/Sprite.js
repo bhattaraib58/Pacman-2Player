@@ -1,3 +1,8 @@
+/**
+ * Sprite Class Helps to Deal with sprite animation and buffering for next frame image
+ *
+ * @class Sprite
+ */
 class Sprite {
 
   /**
@@ -8,22 +13,19 @@ class Sprite {
    */
   constructor(frameSet, delay) {
 
-    /* Each sprite sheet tile is 16x16 pixels in dimension. */
-    const SPRITE_SIZE = 16;
-
     /* The Sprite class manages frames within an animation frame set. The frame
     set is an array of values that correspond to the location of sprite images in
     the sprite sheet. For example, a frame value of 0 would correspond to the first
     sprite image / tile in the sprite sheet. By arranging these values in a frame set
     array, you can create a sequence of frames that make an animation when played in
     quick succession. */
+
     this.count = 0;// Counts the number of game cycles since the last frame change.
     this.delay = delay;// The number of game cycles to wait until the next frame change.
     this.frame = 0;// The value in the sprite sheet of the sprite image / tile to display.
     this.frameIndex = 0;// The frame's index in the current animation frame set.
-    this.frameSet = frameSet;// The current animation frame set that holds sprite tile values.
+    this.frameSet = frameSet;// The current animation frame set [array of frames] that holds sprite tile values.
   }
-
 
 
   /**
@@ -47,9 +49,10 @@ class Sprite {
     }
   }
 
+
   /**
    * Updates Sprite to new sprite
-   * (Animates the sprite to new frame list passed)
+   * (Set the sprite to new frame image)
    *
    * @memberof Sprite
    */

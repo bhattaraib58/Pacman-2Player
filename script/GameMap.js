@@ -25,7 +25,7 @@ class GameMap {
         tileWidth: 16,
         tileHeight: 16,
       };
-    this.layoutMap.layoutImage.src = GAME_IMAGES[0];
+    this.layoutMap.layoutImage.src = PACMAN_TILES;
   }
 
   /**
