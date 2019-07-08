@@ -14,7 +14,17 @@ const PLAYER2_CONTROL_KEY={
   RIGHT: 68
 };
 
+//moving direction for game objects
+const MOVING_DIRECTION = {
+  UP: "UP",
+  DOWN: "DOWN",
+  LEFT: "LEFT",
+  RIGHT: "RIGHT",
+  STOP:"STOP"
+};
 
+
+//game images
 const PACMAN_TILES = 'image/pacman-tiles.png';
 const PACMAN_SPRITES = 'image/sprites32.png';
 
@@ -23,6 +33,19 @@ const GAME_IMAGES = [
   PACMAN_SPRITES
 ];
 
+
+//game scores and values
+const DOT_EATERN_SCORE=10;
+const ENERGIZER_EATEN_SCORE=100;
+const GHOST_EATEN_SCORE=200; //per ghost, if eaten on sucession score =*2
+
+const MAZE_EMPTY_SPACE_VALUE=13;
+const EMPTY_DOT_EATEN_VALUE=36;
+const DOT_VALUE=37;
+const ENERZIER_VALUE=38;
+
+
+//map layout
 const LAYOUT_MAP_ORIGINAL = {
   map:
     [
@@ -38,7 +61,7 @@ const LAYOUT_MAP_ORIGINAL = {
       19, 20, 20, 20, 20, 12, 13, 7, 21, 11, 11, 12, 13, 7, 8, 13, 10, 11, 11, 22, 8, 13, 10, 20, 20, 20, 20, 23,
       13, 13, 13, 13, 13, 5, 13, 7, 18, 15, 15, 16, 13, 14, 16, 13, 14, 15, 15, 17, 8, 13, 9, 13, 13, 13, 13, 13,
       13, 13, 13, 13, 13, 5, 13, 7, 8, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 7, 8, 13, 9, 13, 13, 13, 13, 13,
-      13, 13, 13, 13, 13, 5, 13, 7, 8, 13, 24, 20, 25, 34, 35, 26, 20, 27, 13, 7, 8, 13, 9, 13, 13, 13, 13, 13,
+      13, 13, 13, 13, 13, 5, 13, 7, 8, 13, 24, 20, 25, 34, 34, 26, 20, 27, 13, 7, 8, 13, 9, 13, 13, 13, 13, 13,
       1, 1, 1, 1, 1, 16, 13, 14, 16, 13, 9, 13, 13, 13, 13, 13, 13, 5, 13, 14, 16, 13, 14, 1, 1, 1, 1, 1,
       13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 9, 13, 13, 13, 13, 13, 13, 5, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
       20, 20, 20, 20, 20, 12, 13, 10, 12, 13, 9, 13, 13, 13, 13, 13, 13, 5, 13, 10, 12, 13, 10, 20, 20, 20, 20, 20,

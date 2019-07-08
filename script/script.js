@@ -8,10 +8,10 @@ let canvasHeight = window.innerHeight || document.documentElement.clientHeight |
 
 canvas.imageSmoothingEnabled = false;// This keeps the image looking sharp.
 
-canvas.clientHeight = canvasHeight;
-canvas.clientWidth = canvasWidth;
-canvas.height = canvasHeight;
-canvas.width = canvasWidth;
+canvas.clientHeight = 600;
+canvas.clientWidth = 500;
+canvas.height = 600;
+canvas.width = 500;
 
 const game = new Game(canvas, ctx);
 

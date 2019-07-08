@@ -1,36 +1,34 @@
-class Ghosts
-{
-  constructor()
-  {
-    var position  = null,
-        direction = null,
-        eatable   = null,
-        eaten     = null,
-        due       = null;
+class Ghosts {
+  constructor() {
+    var position = null,
+      direction = null,
+      eatable = null,
+      eaten = null,
+      due = null;
 
 
-        return {
-          "eat"         : eat,
-          "isVunerable" : isVunerable,
-          "isDangerous" : isDangerous,
-          "makeEatable" : makeEatable,
-          "reset"       : reset,
-          "move"        : move,
-          "draw"        : draw
-      };
+    return {
+      "eat": eat,
+      "isVunerable": isVunerable,
+      "isDangerous": isDangerous,
+      "makeEatable": makeEatable,
+      "reset": reset,
+      "move": move,
+      "draw": draw
+    };
   }
 
 
-      
-   isVunerable() { 
+
+  isVunerable() {
     return eatable !== null;
-};
+  };
 
- isDangerous() {
+  isDangerous() {
     return eaten === null;
-};
+  };
 
- isHidden() { 
+  isHidden() {
     return eatable === null && eaten !== null;
-};
+  };
 }

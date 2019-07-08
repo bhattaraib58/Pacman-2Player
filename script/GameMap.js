@@ -26,6 +26,16 @@ class GameMap {
         tileHeight: 16,
       };
     this.layoutMap.layoutImage.src = PACMAN_TILES;
+
+    this.graph = new Array(this.layoutMap.row); //2d array
+    for (let i = 0; i < this.graph.length; i++) {
+      this.graph[i] = new Array(this.layoutMap.column);
+    }
+
+    //for enerzier
+    this.animation = new Sprite();
+    let energizerFrameSet = [4, 6];
+    this.animation.change(energizerFrameSet, 12);
   }
 
   /**
@@ -37,6 +47,23 @@ class GameMap {
    * @memberof GameMap
    */
   drawMap() {
+
+
+
+    // for (let x = 0; x < this.layoutMap.row; x++) {
+    //   for (let y = 0; y < this.layoutMap.column; y++) {
+    //     let value = this.layoutMap.map[(y%this.layoutMap.column) + x*this.layoutMap.column];
+    //     if (value === 13) {
+    //       this.graph[x][y] = 1;
+    //     }
+    //     else {
+    //       this.graph[x][y] = 0;
+    //     }
+    //   }
+    //   console.log(this.graph);
+    // }
+
+
     /* Looping through the tile map. */
     for (let index = this.layoutMap.map.length - 1; index > -1; --index) {
 
@@ -58,6 +85,10 @@ class GameMap {
       this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, Math.floor(destinationX), Math.floor(destinationY), this.layoutMap.tileWidth, this.layoutMap.tileHeight);
     }
 
+
+    // update animation to next frame
+    this.animation.update();
+
     /* Looping through the tile map. */
     for (let index = this.layoutMap.points.length - 1; index > -1; --index) {
       let value = this.layoutMap.points[index];
@@ -65,7 +96,12 @@ class GameMap {
       let sourceY = Math.floor(value / this.layoutMap.tileHeight) * this.layoutMap.tileHeight;
       let destinationX = (index % this.layoutMap.column) * this.layoutMap.tileWidth;
       let destinationY = Math.floor(index / this.layoutMap.column) * this.layoutMap.tileHeight;
-      this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+      if (value !== 38) {
+        this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+      }
+      if (value === 38) {
+        this.ctx.drawImage(this.layoutMap.layoutImage, this.animation.frame * this.layoutMap.tileWidth, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+      }
     }
   }
 
@@ -91,7 +127,33 @@ class GameMap {
    * @memberof GameMap
    */
   getGameMapValueFromXY(x, y) {
+    // here tunnelling refers to pacman going in tunnel 
+    // as gamemap doesn't have value for less than 0 or more than column value so we have to set explicitly
+
+    // set x as last column for tunnelling in left right
+    if (x < 0) {
+      x = this.layoutMap.column - 1;
+    }
+
+    if (x >= this.layoutMap.column) {
+      x = 0;
+    }
+
+    // set y as last row for tunnelling in up down    
+    if (y < 0) {
+      y = this.layoutMap.row - 1;
+    }
+
+    if (y >= this.layoutMap.row) {
+      y = 0;
+    }
+
     let mapPosition = this.toGameMapIndex(x, y);
     return this.layoutMap.map[mapPosition];
+  }
+
+  getGamePointValueFromXY(x, y) {
+    let pointPosition = this.toGameMapIndex(x, y);
+    return this.layoutMap.points[pointPosition];
   }
 }
