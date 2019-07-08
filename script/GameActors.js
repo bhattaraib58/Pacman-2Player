@@ -9,21 +9,25 @@ class GameActors {
    *Creates an instance of GameActors.
    * @param {*} canvas
    * @param {*} ctx
-   * @param {*} gameMap //game map class object
+   * @param {*} gameMap
+   * @param {*} initialPosition
    * @memberof GameActors
    */
-  constructor(canvas, ctx, gameMap) {
+  constructor(canvas, ctx, gameMap, initialPosition) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.gameMap = gameMap;
 
     // directions
     //default moving direction STOP position
-    this.movingDirection =MOVING_DIRECTION.STOP; 
+    this.movingDirection = MOVING_DIRECTION.STOP;
 
     // the cordinates of tile the player is currently moving from-to
-    this.tileFrom = [13, 23];
-    this.tileTo = [13, 23];
+
+    //slice and generate new non mutating array such that the values don't override
+    this.tileFrom = initialPosition.slice(0);
+    //always slice tileTo such that the tilefrom and tile to represent diffrent array locations 
+    this.tileTo = initialPosition.slice(0);
 
     // the time in millisecond at which character began to move
     this.timeMoved = 0;
@@ -31,14 +35,16 @@ class GameActors {
     // the dimension of character Width, height
     this.dimensions = [32, 32];
 
+    // this.position = [208, 360];
+
     // true position of charater in canvas
-    this.position = [208, 360];
+    // place of character in canvas in x,y position
+    this.position = [2]; //2 items x and y in position
+    this.position[0] = (this.tileFrom[0] * this.gameMap.layoutMap.tileWidth) + ((this.gameMap.layoutMap.tileWidth - this.dimensions[0]) / 2);
+    this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
 
     // the time in milliseconds it will take for character to move 1 tile
     this.delayMove = 100;
-
-    this.tileWidth = 16;
-    this.tileHeight = 16;
 
     //set animation objeect
     this.spriteAnimation = new Sprite();
@@ -47,7 +53,9 @@ class GameActors {
       sets. An animation frame set is just an array of frame values that correspond to
       each sprite image in the sprite sheet, just like a tile sheet and a tile map. */
     this.spriteSheet = {
-      frameSets: [[5, 6, 2, 6], [7, 8, 2, 8], [4, 3, 2, 3], [0, 1, 2, 1]],//moving top, moving bottom, moving left, moving right
+      animationDelay: 5,
+      framePosition: 0,
+      frameSets: [],//moving top, moving bottom, moving left, moving right frame set
       image: new Image()
     };
 
@@ -55,6 +63,106 @@ class GameActors {
     this.spriteSheet.image.src = PACMAN_SPRITES;
   }
 
+  //utility functions
+  isLocationEmpty() {
+    return this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE ? true : false;
+  }
+  isBlockUpperThanActorEmpty() {
+    return this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] - 1) == MAZE_EMPTY_SPACE_VALUE ? true : false;
+  }
+
+  isBlockLowerThanActorEmpty() {
+    return this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] + 1) == MAZE_EMPTY_SPACE_VALUE ? true : false;
+  }
+
+  isBlockLeftThanActorEmpty() {
+    return this.gameMap.getGameMapValueFromXY(this.tileFrom[0] - 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE ? true : false;
+  }
+
+  isBlockRightThanActorEmpty() {
+    return this.gameMap.getGameMapValueFromXY(this.tileFrom[0] + 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE ? true : false;
+  }
+
+  setMovingUpActorData() {
+    this.movingDirection = MOVING_DIRECTION.UP;
+    /* To change the animation to pacman moving up, with animation change in 5 sec. */
+    this.spriteAnimation.change(this.spriteSheet.frameSets[0], this.spriteSheet.animationDelay);
+  }
+
+  setMovingDownActorData() {
+    this.movingDirection = MOVING_DIRECTION.DOWN;
+    this.spriteAnimation.change(this.spriteSheet.frameSets[1], this.spriteSheet.animationDelay);
+  }
+
+  setMovingLeftActorData() {
+    this.movingDirection = MOVING_DIRECTION.LEFT;
+    this.spriteAnimation.change(this.spriteSheet.frameSets[2], this.spriteSheet.animationDelay);
+  }
+
+  setMovingRightActorData() {
+    this.movingDirection = MOVING_DIRECTION.RIGHT;
+    this.spriteAnimation.change(this.spriteSheet.frameSets[3], this.spriteSheet.animationDelay);
+  }
+
+  /**
+   * Move actor Based on Direction set 
+   * and which tile to move from which tile
+   *
+   * @memberof GameActors
+   */
+  moveActor() {
+    // used to work as tunnel if left and right are empty pacman/ghosts can easily move in tunnel
+    if (this.tileTo[0] < -1) {
+      this.tileTo[0] = this.gameMap.layoutMap.column;
+    }
+    if (this.tileTo[0] > this.gameMap.layoutMap.column) {
+      this.tileTo[0] = -1;
+    }
+
+
+    // used to work as tunnel if top and bottom are empty pacman/ghosts can easily move in tunnel
+    if (this.tileTo[1] < -1) {
+      this.tileTo[1] = this.gameMap.layoutMap.row;
+    }
+    if (this.tileTo[1] > this.gameMap.layoutMap.row) {
+      this.tileTo[1] = -1;
+    }
+
+    // as our pacman/ghosts needs to move constantly widthout key press,
+    //  also pacman/ghosts should stop when there is obstacle the code has become longer
+
+    // if pacman/ghosts is moving up check of upper box is empty and go otherise stop
+    if (this.movingDirection === MOVING_DIRECTION.UP) {
+      if (this.isBlockUpperThanActorEmpty()) {
+        this.tileTo[1] -= 1;
+      }
+      else { this.movingDirection = MOVING_DIRECTION.STOP; }
+    }
+
+    // if pacman/ghosts is moving down check of down box is empty and go otherise stop
+    if (this.movingDirection === MOVING_DIRECTION.DOWN) {
+      if (this.isBlockLowerThanActorEmpty()) {
+        this.tileTo[1] += 1;
+      }
+      else { this.movingDirection = MOVING_DIRECTION.STOP; }
+    }
+
+    // if pacman/ghosts is moving left check of left box is empty and go otherise stop
+    if (this.movingDirection === MOVING_DIRECTION.LEFT) {
+      if (this.isBlockLeftThanActorEmpty()) {
+        this.tileTo[0] -= 1;
+      }
+      else { this.movingDirection = MOVING_DIRECTION.STOP; }
+    }
+
+    // if pacman/ghosts is moving right check of right box is empty and go otherise stop
+    if (this.movingDirection === MOVING_DIRECTION.RIGHT) {
+      if (this.isBlockRightThanActorEmpty()) {
+        this.tileTo[0] += 1;
+      }
+      else { this.movingDirection = MOVING_DIRECTION.STOP; }
+    }
+  }
 
   /**
    * Allow us to directly place character on tile we specify
@@ -80,14 +188,13 @@ class GameActors {
 
   /**
    * If our player is moving we need some calculation each frame to find true position
-   * and move the pacman accordingly
+   * and move the pacman/ghosts accordingly
    *
    * @param {*} gameTime -we pass current game time in millisecons
    * @returns
    * @memberof GameActors
    */
   processMovement(gameTime) {
-
     // we check if tileTo is same as tileFrom 
     // if this is case we know character is not currently moving
     // we leave function and code know that we are free to receive instructions
@@ -104,7 +211,6 @@ class GameActors {
 
     // if above checks know that character is infact moving
     else {
-
       // we need to accurately calculate its position on Canvas, 
       // we calculate the position of character where it is on canvas
       this.position[0] = (this.tileFrom[0] * this.gameMap.layoutMap.tileWidth) + ((this.gameMap.layoutMap.tileWidth - this.dimensions[0]) / 2);

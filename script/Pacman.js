@@ -1,6 +1,6 @@
 class Pacman extends GameActors {
-  constructor(canvas, ctx, pacmanControlKey, gameMap) {
-    super(canvas, ctx, gameMap);
+  constructor(canvas, ctx, pacmanControlKey, gameMap, initialPosition) {
+    super(canvas, ctx, gameMap, initialPosition);
 
     var position = null,
       direction = null,
@@ -38,6 +38,8 @@ class Pacman extends GameActors {
 
     //set initial moving of pacman to left
     this.movingDirection = MOVING_DIRECTION.LEFT;
+    this.spriteSheet.framePosition = 0; //pacman is on y index 0 on sprite sheet
+    this.spriteSheet.frameSets = [[5, 6, 2, 6], [7, 8, 2, 8], [4, 3, 2, 3], [0, 1, 2, 1]];//moving top, moving bottom, moving left, moving right
 
     //set animation of pacman to left moving
     this.spriteAnimation.change(this.spriteSheet.frameSets[2], 5);
@@ -55,16 +57,15 @@ class Pacman extends GameActors {
     // if we are currently moving dont set value
     if (!super.processMovement(currentFrameTime)) {
 
-      //get score from points
-      if (this.gameMap.getGamePointValueFromXY(this.tileFrom[0], this.tileFrom[1]) == DOT_VALUE) {
-        let indexOfDot = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
-        this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
-        this.dotsEaten++;
-        this.score += DOT_EATERN_SCORE; //each dot worth 10 points
-      }
+      console.log(this.tileFrom);
+      //set points if pacman eat point
+      this.setPointsIfEaten();
 
+      //set pacman position and animation base on input
       this.setPacmanAnimationAndPositionBasedOnKeyInput();
-      this.movePacman();
+
+      //move pacman based on direction set or continuing moving on direction set
+      super.moveActor();
 
       // after setting the values for key press event we set the 
       // time moved (timeMoved= time we started moving the pacman) to current time 
@@ -77,97 +78,42 @@ class Pacman extends GameActors {
     // update animation to next frame
     this.spriteAnimation.update();
     // draw new frame pacman
-    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], 0, this.dimensions[0], this.dimensions[1], this.position[0], this.position[1], this.dimensions[0], this.dimensions[1]);
+    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], this.spriteSheet.framePosition * this.dimensions[1], this.dimensions[0], this.dimensions[1], this.position[0], this.position[1], this.dimensions[0], this.dimensions[1]);
   }
 
-
-  movePacman() {
-    // used to work as tunnel if left and right are empty pacman can easily move in tunnel
-    if (this.tileTo[0] < -1) {
-      this.tileTo[0] = this.gameMap.layoutMap.column;
-    }
-    if (this.tileTo[0] > this.gameMap.layoutMap.column) {
-      this.tileTo[0] = -1;
-    }
-
-
-    // used to work as tunnel if top and bottom are empty pacman can easily move in tunnel
-    if (this.tileTo[1] < -1) {
-      this.tileTo[1] = this.gameMap.layoutMap.row;
-    }
-    if (this.tileTo[1] > this.gameMap.layoutMap.row) {
-      this.tileTo[1] = -1;
-    }
-
-
-    // as our pacman needs to move constantly widthout key press,
-    //  also pacman should stop when there is obstacle the code has become longer
-
-    // if pacman is moving up check of upper box is empty and go otherise stop
-    if (this.movingDirection === MOVING_DIRECTION.UP) {
-      if (this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] - 1) == MAZE_EMPTY_SPACE_VALUE) {
-        this.tileTo[1] -= 1;
-      }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
-    }
-
-    // if pacman is moving down check of down box is empty and go otherise stop
-    if (this.movingDirection === MOVING_DIRECTION.DOWN) {
-      if (this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] + 1) == MAZE_EMPTY_SPACE_VALUE) {
-        this.tileTo[1] += 1;
-      }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
-    }
-
-    // if pacman is moving left check of left box is empty and go otherise stop
-    if (this.movingDirection === MOVING_DIRECTION.LEFT) {
-      if (this.gameMap.getGameMapValueFromXY(this.tileFrom[0] - 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE) {
-        this.tileTo[0] -= 1;
-      }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
-    }
-
-    // if pacman is moving right check of right box is empty and go otherise stop
-    if (this.movingDirection === MOVING_DIRECTION.RIGHT) {
-      if (this.gameMap.getGameMapValueFromXY(this.tileFrom[0] + 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE) {
-        this.tileTo[0] += 1;
-      }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
+  setPointsIfEaten() {
+    //get score from points
+    if (this.gameMap.getGamePointValueFromXY(this.tileFrom[0], this.tileFrom[1]) == DOT_VALUE) {
+      let indexOfDot = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
+      this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
+      this.dotsEaten++;
+      this.score += DOT_EATERN_SCORE; //each dot worth 10 points
     }
   }
 
   setPacmanAnimationAndPositionBasedOnKeyInput() {
     // if up key is pressed and up space is empty
     // set move up and set animation
-    if (this.keyUpPressed &&
-      this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] - 1) == MAZE_EMPTY_SPACE_VALUE) {
-      this.movingDirection = MOVING_DIRECTION.UP;
-      /* To change the animation to pacman moving up, with animation change in 5 sec. */
-      this.spriteAnimation.change(this.spriteSheet.frameSets[0], 5);
+    if (this.keyUpPressed && super.isBlockUpperThanActorEmpty()) {
+      super.setMovingUpActorData();
     }
 
     // if down key is pressed and down space is empty
     // set move down and set animation
-    else if (this.keyDownPressed &&
-      this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1] + 1) == MAZE_EMPTY_SPACE_VALUE) {
-      this.movingDirection = MOVING_DIRECTION.DOWN;
-      this.spriteAnimation.change(this.spriteSheet.frameSets[1], 5);
+    else if (this.keyDownPressed && super.isBlockLowerThanActorEmpty()) {
+      super.setMovingDownActorData();
     }
 
     // if left key is pressed and left space is empty
     // set move left and set animation
-    else if (this.keyLeftPressed &&
-      this.gameMap.getGameMapValueFromXY(this.tileFrom[0] - 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE) {
-      this.movingDirection = MOVING_DIRECTION.LEFT;
-      this.spriteAnimation.change(this.spriteSheet.frameSets[2], 5);
+    else if (this.keyLeftPressed && super.isBlockLeftThanActorEmpty()) {
+      super.setMovingLeftActorData();
     }
 
     // if right key is pressed and right space is empty
     // set move right and set animation
-    else if (this.keyRightPressed &&
-      this.gameMap.getGameMapValueFromXY(this.tileFrom[0] + 1, this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE) {
-      this.movingDirection = MOVING_DIRECTION.RIGHT;
-      this.spriteAnimation.change(this.spriteSheet.frameSets[3], 5);
+    else if (this.keyRightPressed && super.isBlockRightThanActorEmpty()) {
+      super.setMovingRightActorData();
     }
   }
 

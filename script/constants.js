@@ -24,6 +24,11 @@ const MOVING_DIRECTION = {
 };
 
 
+const GHOST_ORIGINALPOSITION={
+  BLINKY:[12,11],
+  PINKY:[15,11]
+}
+
 //game images
 const PACMAN_TILES = 'image/pacman-tiles.png';
 const PACMAN_SPRITES = 'image/sprites32.png';

@@ -47,23 +47,6 @@ class GameMap {
    * @memberof GameMap
    */
   drawMap() {
-
-
-
-    // for (let x = 0; x < this.layoutMap.row; x++) {
-    //   for (let y = 0; y < this.layoutMap.column; y++) {
-    //     let value = this.layoutMap.map[(y%this.layoutMap.column) + x*this.layoutMap.column];
-    //     if (value === 13) {
-    //       this.graph[x][y] = 1;
-    //     }
-    //     else {
-    //       this.graph[x][y] = 0;
-    //     }
-    //   }
-    //   console.log(this.graph);
-    // }
-
-
     /* Looping through the tile map. */
     for (let index = this.layoutMap.map.length - 1; index > -1; --index) {
 

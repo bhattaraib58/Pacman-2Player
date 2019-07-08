@@ -10,6 +10,9 @@ class Game {
     this.pacman1 = null;
     this.pacman2 = null;
 
+    this.blinky = null;
+    this.pinky = null;
+
     //gamamap object
     this.gameMap = null;
 
@@ -23,9 +26,16 @@ class Game {
   }
 
   init() {
+    let initialPosition = [14, 23];
     this.gameMap = new GameMap(this.canvas, this.ctx, this.layoutMap);
-    this.pacman1 = new Pacman(this.canvas, this.ctx, PLAYER1_CONTROL_KEY, this.gameMap);
-    this.pacman2 = new Pacman(this.canvas, this.ctx, PLAYER2_CONTROL_KEY, this.gameMap);
+    this.pacman1 = new Pacman(this.canvas, this.ctx, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
+
+    this.blinky = new Blinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINALPOSITION.BLINKY);
+    this.pinky = new Pinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINALPOSITION.PINKY);
+
+    this.blinky.setCurrenltyFollowingPacman(this.pacman1);
+    this.pinky.setCurrenltyFollowingPacman(this.pacman1);
+    // this.pacman2 = new Pacman(this.canvas, this.ctx, PLAYER2_CONTROL_KEY, this.gameMap,initialPosition);
     this.draw();
   }
 
@@ -42,9 +52,12 @@ class Game {
 
     //draw pacman
     this.pacman1.draw();
-    this.pacman2.draw();
+    // this.pacman2.draw();
 
-    window.requestAnimationFrame(this.draw.bind(this));
+    this.blinky.moveGhosts();
+    this.pinky.moveGhosts();
+
+    // window.requestAnimationFrame(this.draw.bind(this));
   }
 
 
