@@ -1,10 +1,12 @@
 class Ghosts extends GameActors {
-  constructor(canvas, ctx, gameMap, initialPosition) {
+  constructor(canvas, ctx, gameMap, initialPosition, ghostHomePosition) {
     super(canvas, ctx, gameMap, initialPosition);
 
     //currently following pacman
     this.pacman = null;
     this.previousMovingDirection = MOVING_DIRECTION.STOP;
+
+    this.ghostHomePosition = ghostHomePosition;
 
     this.eatable = null;
     this.eaten = null;
@@ -13,7 +15,8 @@ class Ghosts extends GameActors {
     this.chase = true;
     this.frightened = false;
     this.scatter = false;
-    this.spriteSheet.frameSets = [[6, 7], [2, 3], [4, 5], [0, 1]];
+    // this.spriteSheet.frameSets = [[6, 7], [2, 3], [4, 5], [0, 1]];
+    this.spriteSheet.frameSets = [[0, 1], [0, 1], [0, 1], [0, 1]];
   }
 
 
@@ -34,7 +37,7 @@ class Ghosts extends GameActors {
     if (!super.processMovement(currentFrameTime)) {
 
       //chase pacman 
-      this.chasePacman();
+      this.chaseMode();
 
       //move pacman based on direction set or continuing moving on direction set
       super.moveActor();
@@ -53,24 +56,61 @@ class Ghosts extends GameActors {
 
   }
 
+
+  frightenedMode() {
+    this.spriteSheet.framePosition = 7;
+
+    //previous moving direction of ghost
+    this.previousMovingDirection = this.movingDirection;
+    //if there are 2 or more than 2 direction to move then only move ghost otherwise keep ghost going in same direction
+    if (this.checkJunction() >= 2) {
+
+      let randomNumber, randomDirection;
+      while (true) {
+        randomNumber = Math.floor(Math.random() * (Object.keys(MOVING_DIRECTION).length - 1));
+        randomDirection = MOVING_DIRECTION[Object.keys(MOVING_DIRECTION)[randomNumber]];
+
+        if ((randomDirection == MOVING_DIRECTION.UP) && (this.previousMovingDirection != MOVING_DIRECTION.DOWN) && super.isBlockUpperThanActorEmpty()) {
+          super.setMovingUpActorData();
+          break;
+        }
+        if ((randomDirection == MOVING_DIRECTION.LEFT) && (this.previousMovingDirection != MOVING_DIRECTION.RIGHT) && super.isBlockLeftThanActorEmpty()) {
+          super.setMovingLeftActorData();
+          break;
+        }
+        if ((randomDirection == MOVING_DIRECTION.RIGHT) && (this.previousMovingDirection != MOVING_DIRECTION.LEFT) && super.isBlockRightThanActorEmpty()) {
+          super.setMovingRightActorData();
+          break;
+        }
+        if ((randomDirection == MOVING_DIRECTION.DOWN) && (this.previousMovingDirection != MOVING_DIRECTION.UP) && super.isBlockLowerThanActorEmpty()) {
+          super.setMovingDownActorData();
+          break;
+        }
+      }
+    }
+  }
+
+
   checkJunction() {
     let junctionValue = 0;
-    if (super.isBlockUpperThanActorEmpty()) {
+    if ((this.previousMovingDirection != MOVING_DIRECTION.UP) && super.isBlockUpperThanActorEmpty()) {
       junctionValue++;
     }
-    if (super.isBlockLowerThanActorEmpty()) {
+    if ((this.previousMovingDirection != MOVING_DIRECTION.DOWN) && super.isBlockLowerThanActorEmpty()) {
       junctionValue++;
     }
-    if (super.isBlockLeftThanActorEmpty()) {
+    if ((this.previousMovingDirection != MOVING_DIRECTION.LEFT) && super.isBlockLeftThanActorEmpty()) {
       junctionValue++;
     }
-    if (super.isBlockRightThanActorEmpty()) {
+    if ((this.previousMovingDirection != MOVING_DIRECTION.RIGHT) && super.isBlockRightThanActorEmpty()) {
       junctionValue++;
     }
     return junctionValue;
   }
 
-  chasePacman() {
+
+
+  chaseMode() {
     //previous moving direction of ghost
     this.previousMovingDirection = this.movingDirection;
 
@@ -90,10 +130,10 @@ class Ghosts extends GameActors {
           if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
             super.setMovingUpActorData();
           }
-          else if (this.previousMovingDirection != MOVING_DIRECTION.RIGHT && super.isBlockLeftThanActorEmpty()) {
+          else if (differenceInXAxis > 0 && this.previousMovingDirection != MOVING_DIRECTION.RIGHT && super.isBlockLeftThanActorEmpty()) {
             super.setMovingLeftActorData();
           }
-          else if (this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
+          else if (differenceInXAxis < 0 && this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
             super.setMovingRightActorData();
           }
           else if (this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
@@ -106,11 +146,11 @@ class Ghosts extends GameActors {
           if (this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
             super.setMovingDownActorData();
           }
-          else if (this.previousMovingDirection != MOVING_DIRECTION.RIGHT && super.isBlockLeftThanActorEmpty()) {
+          else if (differenceInXAxis > 0 && this.previousMovingDirection != MOVING_DIRECTION.RIGHT && super.isBlockLeftThanActorEmpty()) {
             super.setMovingLeftActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
+          else if (differenceInXAxis < 0 && this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
             super.setMovingRightActorData();
           }
           else if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
@@ -120,11 +160,11 @@ class Ghosts extends GameActors {
 
         // this is case when y=0 (mostly), in this situation favour left or right direction
         else {
-          if (this.previousMovingDirection != MOVING_DIRECTION.RIGHT && super.isBlockLeftThanActorEmpty()) {
+          if (differenceInXAxis > 0 && super.isBlockLeftThanActorEmpty()) {
             super.setMovingLeftActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
+          else if (differenceInXAxis < 0 && super.isBlockRightThanActorEmpty()) {
             super.setMovingRightActorData();
           }
           else if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
@@ -146,11 +186,11 @@ class Ghosts extends GameActors {
             super.setMovingLeftActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
+          else if (differenceInYAxis > 0 && this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
             super.setMovingUpActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
+          else if (differenceInYAxis < 0 && this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
             super.setMovingDownActorData();
           }
 
@@ -164,11 +204,11 @@ class Ghosts extends GameActors {
           if (this.previousMovingDirection != MOVING_DIRECTION.LEFT && super.isBlockRightThanActorEmpty()) {
             super.setMovingRightActorData();
           }
-          else if (this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
+          else if (differenceInYAxis < 0 && this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
             super.setMovingDownActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
+          else if (differenceInYAxis > 0 && this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
             super.setMovingUpActorData();
           }
 
@@ -179,11 +219,11 @@ class Ghosts extends GameActors {
 
         // this is case when x=0 (mostly), in this situation favour up or direction direction
         else {
-          if (this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
+          if (differenceInYAxis > 0 && this.previousMovingDirection != MOVING_DIRECTION.DOWN && super.isBlockUpperThanActorEmpty()) {
             super.setMovingUpActorData();
           }
 
-          else if (this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
+          else if (differenceInYAxis < 0 && this.previousMovingDirection != MOVING_DIRECTION.UP && super.isBlockLowerThanActorEmpty()) {
             super.setMovingDownActorData();
           }
 
@@ -223,6 +263,7 @@ class Ghosts extends GameActors {
       }
     }
   }
+
 
 
 

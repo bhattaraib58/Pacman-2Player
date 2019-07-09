@@ -30,8 +30,8 @@ class Game {
     this.gameMap = new GameMap(this.canvas, this.ctx, this.layoutMap);
     this.pacman1 = new Pacman(this.canvas, this.ctx, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
 
-    this.blinky = new Blinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINALPOSITION.BLINKY);
-    this.pinky = new Pinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINALPOSITION.PINKY);
+    this.blinky = new Blinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINAL_POSITION.BLINKY,GHOST_HOME_POSITION.BLINKY);
+    this.pinky = new Pinky(this.canvas, this.ctx, this.gameMap, GHOST_ORIGINAL_POSITION.PINKY,GHOST_HOME_POSITION.PINKY);
 
     this.blinky.setCurrenltyFollowingPacman(this.pacman1);
     this.pinky.setCurrenltyFollowingPacman(this.pacman1);
@@ -57,7 +57,7 @@ class Game {
     this.blinky.moveGhosts();
     this.pinky.moveGhosts();
 
-    // window.requestAnimationFrame(this.draw.bind(this));
+    window.requestAnimationFrame(this.draw.bind(this));
   }
 
 

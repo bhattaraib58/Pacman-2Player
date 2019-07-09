@@ -4,41 +4,39 @@ class Pinky extends Ghosts {
 
     this.spriteSheet.framePosition = 3;
 
-    this.movingDirection = MOVING_DIRECTION.UP;
+    this.movingDirection = MOVING_DIRECTION.RIGHT;
     /* To change the animation to pacman moving up, with animation change in 5 sec. */
     this.spriteAnimation.change(this.spriteSheet.frameSets[0], 5);
   }
 
   getPointToFollow() {
-    let currentPacmanLocation = this.pacman.tileFrom;
-
-    if (currentPacmanLocation[0] < 0) {
-      // choose left
-      currentPacmanLocation = [0, 0];
-    }
-
-    if (currentPacmanLocation[0] > this.gameMap.layoutMap.column) {
-      //choose left
-      currentPacmanLocation = [this.gameMap.layoutMap.column - 2, this.gameMap.layoutMap.row - 2];
-    }
-
-    if (currentPacmanLocation[1] < 0) {
-      // choose down
-      currentPacmanLocation = [0, 0];
-    }
-
-    if (currentPacmanLocation[1] > this.gameMap.layoutMap.row) {
-      //choose up
-      currentPacmanLocation = [this.gameMap.layoutMap.column - 2, this.gameMap.layoutMap.row - 2];
-    }
+    //get new non-mutated array such that original don't change
+    let currentPacmanLocation = this.pacman.tileFrom.slice(0);
+    let pacmanMovingDirection = this.pacman.movingDirection;
 
     // location to tap on
-    let newXAxisLocation = currentPacmanLocation[0] + 1;
-    let newYAxisLocation = currentPacmanLocation[1] + 1;
+    let newXAxisLocation = currentPacmanLocation[0];
+    let newYAxisLocation = currentPacmanLocation[1];
 
-    while (!this.isLocationEmpty(newXAxisLocation, newYAxisLocation)) {
-      newXAxisLocation += 1;
-      newYAxisLocation -= 1;
+    let pinkyDistnceFromPacmanInXAxis = this.tileTo[0] - newXAxisLocation;
+    let pinkyDistnceFromPacmanInYAxis = this.tileTo[1] - newYAxisLocation;
+
+    if (!(Math.abs(pinkyDistnceFromPacmanInYAxis) < 4)) {
+      if (pacmanMovingDirection === MOVING_DIRECTION.UP) {
+        newYAxisLocation = currentPacmanLocation[1] - 4;
+      }
+      else if (pacmanMovingDirection === MOVING_DIRECTION.DOWN) {
+        newYAxisLocation = currentPacmanLocation[1] + 4;
+      }
+    }
+
+    else if (!(Math.abs(pinkyDistnceFromPacmanInXAxis) < 4)) {
+      if (pacmanMovingDirection === MOVING_DIRECTION.LEFT) {
+        newXAxisLocation = currentPacmanLocation[0] - 4;
+      }
+      else if (pacmanMovingDirection === MOVING_DIRECTION.RIGHT) {
+        newXAxisLocation = currentPacmanLocation[0] + 4;
+      }
     }
     //set pacman moving path
     return [newXAxisLocation, newYAxisLocation];

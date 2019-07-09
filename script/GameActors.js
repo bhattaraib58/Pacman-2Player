@@ -44,7 +44,7 @@ class GameActors {
     this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
 
     // the time in milliseconds it will take for character to move 1 tile
-    this.delayMove = 100;
+    this.delayMove = 500;
 
     //set animation objeect
     this.spriteAnimation = new Sprite();
@@ -136,7 +136,6 @@ class GameActors {
       if (this.isBlockUpperThanActorEmpty()) {
         this.tileTo[1] -= 1;
       }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
     }
 
     // if pacman/ghosts is moving down check of down box is empty and go otherise stop
@@ -144,7 +143,6 @@ class GameActors {
       if (this.isBlockLowerThanActorEmpty()) {
         this.tileTo[1] += 1;
       }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
     }
 
     // if pacman/ghosts is moving left check of left box is empty and go otherise stop
@@ -152,7 +150,6 @@ class GameActors {
       if (this.isBlockLeftThanActorEmpty()) {
         this.tileTo[0] -= 1;
       }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
     }
 
     // if pacman/ghosts is moving right check of right box is empty and go otherise stop
@@ -160,7 +157,6 @@ class GameActors {
       if (this.isBlockRightThanActorEmpty()) {
         this.tileTo[0] += 1;
       }
-      else { this.movingDirection = MOVING_DIRECTION.STOP; }
     }
   }
 

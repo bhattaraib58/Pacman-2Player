@@ -56,8 +56,6 @@ class Pacman extends GameActors {
 
     // if we are currently moving dont set value
     if (!super.processMovement(currentFrameTime)) {
-
-      console.log(this.tileFrom);
       //set points if pacman eat point
       this.setPointsIfEaten();
 
