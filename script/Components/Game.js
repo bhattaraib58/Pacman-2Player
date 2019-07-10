@@ -1,7 +1,8 @@
 class Game {
-  constructor(canvas, ctx) {
+  constructor(canvas, ctx, gameWorldObject) {
     this.canvas = canvas;
     this.ctx = ctx;
+    this.gameWorldObject = gameWorldObject;
 
     this.layoutMap = LAYOUT_MAP_ORIGINAL;
     this.gameLevel = INITIAL_LEVEL;
@@ -17,6 +18,8 @@ class Game {
     //gamamap object
     this.gameMap = null;
 
+    this.gameMode = GAME_MODE.GAME_START;
+
     // currently which time we are on
     this.currentSecond = 0;
 
@@ -26,6 +29,7 @@ class Game {
     this.framesLastSecond = 0;
 
     this.scoreDisplayCounter = 0;
+    this.gameModeCounter = 0;
 
     this.init();
   }
@@ -36,42 +40,152 @@ class Game {
 
     let initialPosition = [14, 23];
     this.gameMap = new GameMap(this.ctx, this.layoutMap);
-    this.pacman1 = new Pacman(this.ctx, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
+    this.pacman1 = new Pacman(this.ctx, this, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
 
-    this.blinky = new Blinky(this.ctx, this.gameMap, GHOST_POSITION.BLINKY.INITIAL_POSITION, GHOST_POSITION.BLINKY.SCATTER_HOME_POSITION);
+    this.blinky = new Blinky(
+      this.ctx,
+      this.gameMap,
+      GHOST_POSITION.BLINKY.INITIAL_POSITION,
+      GHOST_POSITION.BLINKY.SCATTER_HOME_POSITION);
     // this.pinky = new Pinky(this.ctx, this.gameMap,GHOST_POSITION.PINKY.INITIAL_POSITION, GHOST_POSITION.PINKY.SCATTER_HOME_POSITION);
 
     this.blinky.setCurrenltyFollowingPacman(this.pacman1);
     // this.pinky.setCurrenltyFollowingPacman(this.pacman1);
-    // this.pacman2 = new Pacman(this.ctx, PLAYER2_CONTROL_KEY, this.gameMap,initialPosition);
+    // this.pacman2 = new Pacman(this.ctx,this, PLAYER2_CONTROL_KEY, this.gameMap,initialPosition);
 
     ghosts.push(this.blinky);
     this.pacman1.setGhosts(ghosts);
+  }
+
+  createNewGame() {
+    //all ghosts in game array
+    let ghosts = [];
+
+    let initialPosition = [14, 23];
+    this.pacman1.initPacman(initialPosition);
+
+    this.gameMap = new GameMap(
+      this.ctx,
+      this.layoutMap);
+    this.blinky = new Blinky(this.ctx,
+      this.gameMap,
+      GHOST_POSITION.BLINKY.INITIAL_POSITION,
+      GHOST_POSITION.BLINKY.SCATTER_HOME_POSITION);
+
+    this.blinky.setCurrenltyFollowingPacman(this.pacman1);
+    ghosts.push(this.blinky);
+    this.pacman1.setGhosts(ghosts);
+
   }
 
   draw() {
     this.scoreDisplayCounter++;
     // clear canvas
     this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
 
     // draw game map
     this.gameMap.drawMap();
 
-    //draw pacman
-    this.pacman1.draw();
-    // this.pacman2.draw();
+    switch (this.gameMode) {
+      case GAME_MODE.GAME_PLAYING:
+        //draw pacman
+        this.pacman1.draw();
+        // this.pacman2.draw();
 
-    this.blinky.moveGhosts();
-    // this.pinky.moveGhosts();
+        this.blinky.moveGhosts();
+        // this.pinky.moveGhosts();
+        break;
 
+      case GAME_MODE.GAME_START:
+        this.drawGameStartingScreen();
+        break;
+
+      case GAME_MODE.GAME_BEGIN:
+          this.createNewGame();
+        this.drawGameBeginingScreen();
+        break;
+
+      case GAME_MODE.PACMAN_DEAD:
+        //draw pacman dead, if animation not completed to show dead pacman start new game
+        if (!this.pacman1.drawPacmanDead()) {
+          this.gameMode = GAME_MODE.GAME_BEGIN;
+        }
+        break;
+
+      case GAME_MODE.GAME_LEVEL_COMPLETED:
+        break;
+
+      case GAME_MODE.GAME_OVER:
+        //draw pacman dead, if animation not completed to show dead pacman dont show game over
+        if (!this.pacman1.drawPacmanDead()) {
+          this.gameModeCounter++;
+          this.drawGameover();
+          if (this.gameModeCounter > 100) {
+            this.gameWorldObject.gameState = GAME_STATE.MENU;
+          }
+        }
+        break;
+    }
     this.drawPacmanGameHeader();
     this.drawPacmanGameFooter();
+  }
 
-    //reset counter
-    if (this.scoreDisplayCounter >= 30) {
-      this.scoreDisplayCounter = 0;
+  drawGameStartingScreen() {
+    this.gameModeCounter++;
+
+    writeTextOnCanvasWithSize(this.ctx,
+      'PLAYER ONE',
+      16,
+      '#00ffde',
+      (9 * 16),
+      HEADER_HEIGHT + (12 * 16)
+    );
+
+    writeTextOnCanvasWithSize(this.ctx,
+      'READY!',
+      16,
+      '#ffff00',
+      (11 * 16),
+      HEADER_HEIGHT + (18 * 16)
+    );
+
+    if (this.gameModeCounter >= 100) {
+      this.gameMode = GAME_MODE.GAME_BEGIN;
     }
+  }
+
+  drawGameBeginingScreen() {
+    this.gameModeCounter++;
+
+    // this.blinky.drawInitialSprite();
+    this.pacman1.drawInitialSprite();
+    writeTextOnCanvasWithSize(this.ctx,
+      'READY!',
+      16,
+      '#ffff00',
+      (11 * 16),
+      HEADER_HEIGHT + (18 * 16)
+    );
+
+    if (this.gameModeCounter >= 200) {
+      this.gameModeCounter = 0;
+      this.gameMode = GAME_MODE.GAME_PLAYING;
+    }
+  }
+
+  drawGameover() {
+    writeTextOnCanvasWithSize(this.ctx,
+      'GAME  OVER',
+      16,
+      '#ff0000',
+      (11 * 13),
+      HEADER_HEIGHT + (18 * 16)
+    );
   }
 
   drawPacmanGameHeader() {
@@ -90,6 +204,11 @@ class Game {
 
     writeTextOnCanvas(this.ctx, '2UP', LAYOUT_MAP_ORIGINAL.tileWidth * 22, 20);
     writeTextOnCanvas(this.ctx, 0, LAYOUT_MAP_ORIGINAL.tileWidth * 22, 40);
+
+    //reset counter
+    if (this.scoreDisplayCounter >= 30) {
+      this.scoreDisplayCounter = 0;
+    }
   }
 
   drawPacmanGameFooter() {

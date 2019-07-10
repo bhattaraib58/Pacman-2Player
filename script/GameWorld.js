@@ -1,4 +1,14 @@
+/**
+ * Game Governing body where all game modes are executes from
+ *
+ * @class GameWorld
+ */
 class GameWorld {
+  /**
+   *Creates an instance of GameWorld.
+   * @param {*} canvasElement
+   * @memberof GameWorld
+   */
   constructor(canvasElement) {
     this.canvasElement = canvasElement;
     this.canvasElement.width = CANVAS_WIDTH;
@@ -7,7 +17,8 @@ class GameWorld {
     this.ctx = this.canvasElement.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;// This keeps the image looking sharp.
 
-    this.gameState = GAME_STATE.MENU;
+    // this.gameState = GAME_STATE.MENU;
+    this.gameState = GAME_STATE.SINGLE_PLAYER;
     this.gameMenu = null;
     this.singlePlayerGame = null;
 
@@ -46,6 +57,6 @@ class GameWorld {
 
   resetGameComponents() {
     this.gameMenu = new GameMenu(this.ctx, this);
-    this.singlePlayerGame = new Game(this.canvasElement, this.ctx);
+    this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this);
   }
 }

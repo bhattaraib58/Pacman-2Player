@@ -29,13 +29,21 @@ const GAME_STATE = {
   SINGLE_PLAYER: 200,
   PLAYER_VS_PLAYER: 300,
   TWO_PLAYER_MODE: 400,
-  HIGH_SCORE_DISPLAY:500
+  HIGH_SCORE_DISPLAY: 500
+};
+const GAME_MODE = {
+  GAME_START: 0,
+  GAME_BEGIN: 1,
+  GAME_PLAYING: 2,
+  PACMAN_DEAD: 3,
+  GAME_LEVEL_COMPLETED: 4,
+  GAME_OVER: 5,
 };
 
 //game images
 const PACMAN_TILES = 'image/pacman-tiles.png';
 const PACMAN_SPRITES = 'image/sprites32.png';
-const PACMAN_LOGO='image/pacman-logo.png';
+const PACMAN_LOGO = 'image/pacman-logo.png';
 
 const GAME_IMAGES = [
   PACMAN_TILES,
@@ -84,7 +92,7 @@ const GHOST_POSITION = {
 
 
 const PACMAN_MAX_LIVES = 5;
-const INITIAL_LEVEL = 15;
+const INITIAL_LEVEL = 1;
 
 //game level- game level corresponding image position
 const GAME_LEVEL = {

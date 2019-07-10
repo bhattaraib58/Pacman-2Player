@@ -1,8 +1,9 @@
 class Pacman extends GameActors {
-  constructor(ctx, pacmanControlKey, gameMap, initialPosition) {
+  constructor(ctx, gameObject, pacmanControlKey, gameMap, initialPosition) {
     super(ctx, gameMap, initialPosition);
-    
-    this.lives = 5;
+
+    this.gameObject = gameObject;
+    this.lives = 3;
     this.gameOver = false;
     this.dotsEaten = 0;
     this.energizerEaten = 0;
@@ -24,18 +25,18 @@ class Pacman extends GameActors {
     // the time in milliseconds it will take for character to move 1 tile
     this.delayMove = 100;
 
+    // event listeners
+    this.addEventListeners();
+
     //initialize pacman
-    this.initPacman();
+    this.initPacman(initialPosition);
   }
 
   setGhosts(ghosts) {
     this.ghosts = ghosts;
   }
 
-  initPacman() {
-    // event listeners
-    this.addEventListeners();
-
+  initPacman(initialPosition) {
     //set initial moving of pacman to left
     this.movingDirection = MOVING_DIRECTION.LEFT;
     this.spriteSheet.framePosition = 0; //pacman is on y index 0 on sprite sheet
@@ -43,6 +44,15 @@ class Pacman extends GameActors {
 
     //set animation of pacman to left moving
     this.spriteAnimation.change(this.spriteSheet.frameSets[2], 5);
+
+    //slice and generate new non mutating array such that the values don't override
+    this.tileFrom = initialPosition.slice(0);
+    //always slice tileTo such that the tilefrom and tile to represent diffrent array locations 
+    this.tileTo = initialPosition.slice(0);
+
+    this.position = [2]; //2 items x and y in position
+    this.position[0] = (this.tileFrom[0] * this.gameMap.layoutMap.tileWidth) + ((this.gameMap.layoutMap.tileWidth - this.dimensions[0]) / 2);
+    this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
   }
 
   /**
@@ -56,7 +66,7 @@ class Pacman extends GameActors {
     let xPositionDifference = Math.abs(this.position[0] - ghostPosition[0]);
     let yPositionDifference = Math.abs(this.position[1] - ghostPosition[1]);
 
-    if (xPositionDifference < 10 && yPositionDifference < 10) {
+    if (xPositionDifference < 5 && yPositionDifference < 5) {
       return true;
     }
     return false;
@@ -70,18 +80,9 @@ class Pacman extends GameActors {
   kill() {
     this.lives -= 1;
     if (this.lives < 0) {//game over if no lives left
-      this.gameOver = true;
-      console.log('game over');
+      this.gameObject.gameMode = GAME_MODE.GAME_OVER;
     } else {
-      // pos = new PVector(13 * 16 + 8, 23 * 16 + 8);     //reset positions  
-
-      // blinky = new Blinky();
-      // clyde = new Clyde();
-      // pinky = new Pinky();
-      // inky = new Inky();
-      // vel = new PVector(-1, 0);
-      // turnTo = new PVector(-1, 0);
-
+      this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
       console.log('new game');
     }
   }
@@ -118,7 +119,68 @@ class Pacman extends GameActors {
     // update animation to next frame
     this.spriteAnimation.update();
     // draw new frame pacman
-    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], this.spriteSheet.framePosition * this.dimensions[1], this.dimensions[0], this.dimensions[1], this.position[0], this.position[1]+HEADER_HEIGHT, this.dimensions[0], this.dimensions[1]);
+    this.ctx.drawImage(
+      this.spriteSheet.image,
+      this.spriteAnimation.frame * this.dimensions[0],
+      this.spriteSheet.framePosition * this.dimensions[1],
+      this.dimensions[0],
+      this.dimensions[1],
+      this.position[0],
+      this.position[1] + HEADER_HEIGHT,
+      this.dimensions[0],
+      this.dimensions[1]
+    );
+  }
+
+  drawInitialSprite() {
+    // draw new frame pacman
+    this.ctx.drawImage(
+      this.spriteSheet.image,
+      2 * this.dimensions[0],
+      0 * this.dimensions[1],
+      this.dimensions[0],
+      this.dimensions[1],
+      this.position[0],
+      this.position[1] + HEADER_HEIGHT,
+      this.dimensions[0],
+      this.dimensions[1]
+    );
+  }
+
+  drawPacmanDead() {
+    // if all being dead sprite shown return as false to indicate to move on
+    if (this.spriteAnimation.frame >= 10) {
+      return false;
+    }
+    this.removeEventListeners();
+    this.setDeadSpriteOfPacman();
+    // update animation to next frame
+    this.spriteAnimation.update();
+    // draw new frame pacman
+    this.ctx.drawImage(
+      this.spriteSheet.image,
+      this.spriteAnimation.frame * this.dimensions[0],
+      this.spriteSheet.framePosition * this.dimensions[1],
+      this.dimensions[0],
+      this.dimensions[1],
+      this.position[0],
+      this.position[1] + HEADER_HEIGHT,
+      this.dimensions[0],
+      this.dimensions[1]
+    );
+    return true;
+  }
+
+  setDeadSpriteOfPacman() {
+    // return if dead sprite already set
+    if (this.spriteSheet.framePosition == 1) {
+      return;
+    }
+    // set sprite to dead
+    this.spriteSheet.framePosition = 1;
+    this.spriteSheet.frameSets = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]];
+    this.spriteAnimation.change(this.spriteSheet.frameSets[0], 10);
+    this.spriteAnimation.frame = 0;
   }
 
   setPointsIfEaten() {
