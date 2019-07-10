@@ -1,6 +1,6 @@
 class Blinky extends Ghosts {
-  constructor(canvas, ctx, gameMap, initialPosition, ghostHomePosition) {
-    super(canvas, ctx, gameMap, initialPosition, ghostHomePosition);
+  constructor(ctx, gameMap, initialPosition, ghostScatterHomePosition) {
+    super(ctx, gameMap, initialPosition, ghostScatterHomePosition);
 
     this.spriteSheet.framePosition = 2;
 

@@ -1,4 +1,4 @@
-const PLAYER1_CONTROL_KEY={
+const PLAYER1_CONTROL_KEY = {
   //ARROW KEYS
   UP: 38,
   DOWN: 40,
@@ -6,7 +6,7 @@ const PLAYER1_CONTROL_KEY={
   RIGHT: 39
 };
 
-const PLAYER2_CONTROL_KEY={
+const PLAYER2_CONTROL_KEY = {
   //WSAD KEYS
   UP: 87,
   DOWN: 83,
@@ -20,40 +20,105 @@ const MOVING_DIRECTION = {
   DOWN: "DOWN",
   LEFT: "LEFT",
   RIGHT: "RIGHT",
-  STOP:"STOP"
+  STOP: "STOP"
 };
 
-
-const GHOST_ORIGINAL_POSITION={
-  BLINKY:[12,11],
-  PINKY:[15,11]
-}
-
-const GHOST_HOME_POSITION={
-  BLINKY:[1,1],
-  PINKY:[]
+//Game States
+const GAME_STATE = {
+  MENU: 100,
+  SINGLE_PLAYER: 200,
+  PLAYER_VS_PLAYER: 300,
+  TWO_PLAYER_MODE: 400,
+  HIGH_SCORE_DISPLAY:500
 };
 
 //game images
 const PACMAN_TILES = 'image/pacman-tiles.png';
 const PACMAN_SPRITES = 'image/sprites32.png';
+const PACMAN_LOGO='image/pacman-logo.png';
 
 const GAME_IMAGES = [
   PACMAN_TILES,
-  PACMAN_SPRITES
+  PACMAN_SPRITES,
+  PACMAN_LOGO
 ];
 
+const PACMAN_SPRITE_IMAGE = new Image();
+PACMAN_SPRITE_IMAGE.src = PACMAN_SPRITES;
+
+const PACMAN_LOGO_IMAGE = new Image();
+PACMAN_LOGO_IMAGE.src = PACMAN_LOGO;
+
+const GHOST_IMAGE_POSITIONS = {
+  CHASE_MODE: {
+    BLINKY: { FRAME_POSITION: 2 },
+    PINKY: { FRAME_POSITION: 3 },
+    INKY: { FRAME_POSITION: 4 },
+    CLYDE: { FRAME_POSITION: 5 },
+    FRAME_SETS: [[6, 7], [2, 3], [4, 5], [0, 1]]
+  },
+  GHOST_MODE: {
+    FRAME_POSITION: 6,
+    FRAME_SETS: [[6], [2], [4], [0]]
+  },
+  FRIGHTENED_MODE_BLUE: {
+    FRAME_POSITION: 7,
+    FRAME_SETS: [[0, 1], [0, 1], [0, 1], [0, 1]]
+  },
+  FRIGHTENED_MODE_WHITE: {
+    FRAME_POSITION: 7,
+    FRAME_SETS: [[2, 3], [2, 3], [2, 3], [2, 3]]
+  },
+};
+
+const GHOST_POSITION = {
+  BLINKY: {
+    INITIAL_POSITION: [13, 11],
+    SCATTER_HOME_POSITION: [1, 1]
+  },
+  PINKY: {
+    INITIAL_POSITION: [15, 11],
+    SCATTER_HOME_POSITION: [1, 1]
+  },
+};
+
+
+const PACMAN_MAX_LIVES = 5;
+const INITIAL_LEVEL = 15;
+
+//game level- game level corresponding image position
+const GAME_LEVEL = {
+  1: 3,
+  2: 2,
+  3: 1,
+  4: 1,
+  5: 0,
+  6: 0,
+  7: 4,
+  8: 4,
+  9: 5,
+  10: 5,
+  11: 6,
+  12: 6,
+  13: 7,
+  14: 7,
+  15: 7,
+  16: 7,
+  17: 7,
+  18: 7,
+  19: 7,
+  20: 7
+};
 
 //game scores and values
-const DOT_EATERN_SCORE=10;
-const ENERGIZER_EATEN_SCORE=100;
-const GHOST_EATEN_SCORE=200; //per ghost, if eaten on sucession score =*2
+const DOT_EATERN_SCORE = 10;
+const ENERGIZER_EATEN_SCORE = 100;
+const GHOST_EATEN_SCORE = 200; //per ghost, if eaten on sucession score =*2
 
-const MAZE_EMPTY_SPACE_VALUE=13;
-const EMPTY_DOT_EATEN_VALUE=36;
-const DOT_VALUE=37;
-const ENERZIER_VALUE=38;
-
+const MAZE_EMPTY_SPACE_VALUE = 13;
+const EMPTY_DOT_EATEN_VALUE = 36;
+const DOT_VALUE = 37;
+const ENERZIER_VALUE = 38;
 
 //map layout
 const LAYOUT_MAP_ORIGINAL = {
@@ -132,3 +197,10 @@ const LAYOUT_MAP_ORIGINAL = {
   tileHeight: 16
 };
 LAYOUT_MAP_ORIGINAL.layoutImage.src = PACMAN_TILES; //set the tile image
+
+const HEADER_HEIGHT = 60;
+const FOOTER_HEIGHT = 40;
+const GAME_HEIGHT = LAYOUT_MAP_ORIGINAL.tileHeight * LAYOUT_MAP_ORIGINAL.row + HEADER_HEIGHT;
+
+const CANVAS_WIDTH = LAYOUT_MAP_ORIGINAL.tileWidth * LAYOUT_MAP_ORIGINAL.column;
+const CANVAS_HEIGHT = GAME_HEIGHT + FOOTER_HEIGHT;

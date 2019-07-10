@@ -1,19 +1,15 @@
 /**
- *
- *
  * @class GameMap
  */
 class GameMap {
 
   /**
    *Creates an instance of GameMap.
-   * @param {*} canvas
    * @param {*} ctx
    * @param {*} layoutMap
    * @memberof GameMap
    */
-  constructor(canvas, ctx, layoutMap) {
-    this.canvas = canvas;
+  constructor(ctx, layoutMap) {
     this.ctx = ctx;
     this.layoutMap = layoutMap ||
       {
@@ -26,11 +22,6 @@ class GameMap {
         tileHeight: 16,
       };
     this.layoutMap.layoutImage.src = PACMAN_TILES;
-
-    this.graph = new Array(this.layoutMap.row); //2d array
-    for (let i = 0; i < this.graph.length; i++) {
-      this.graph[i] = new Array(this.layoutMap.column);
-    }
 
     //for enerzier
     this.animation = new Sprite();
@@ -47,6 +38,10 @@ class GameMap {
    * @memberof GameMap
    */
   drawMap() {
+
+    // update enerzier animation to next frame
+    this.animation.update();
+
     /* Looping through the tile map. */
     for (let index = this.layoutMap.map.length - 1; index > -1; --index) {
 
@@ -65,12 +60,8 @@ class GameMap {
       let destinationY = Math.floor(index / this.layoutMap.column) * this.layoutMap.tileHeight;
 
       /* Draw the tile image to the ctx. The width and height of the tile is taken from the tileSheet object. */
-      this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, Math.floor(destinationX), Math.floor(destinationY), this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+      this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, Math.floor(destinationX), Math.floor(destinationY)+HEADER_HEIGHT, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
     }
-
-
-    // update animation to next frame
-    this.animation.update();
 
     /* Looping through the tile map. */
     for (let index = this.layoutMap.points.length - 1; index > -1; --index) {
@@ -80,10 +71,10 @@ class GameMap {
       let destinationX = (index % this.layoutMap.column) * this.layoutMap.tileWidth;
       let destinationY = Math.floor(index / this.layoutMap.column) * this.layoutMap.tileHeight;
       if (value !== 38) {
-        this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+        this.ctx.drawImage(this.layoutMap.layoutImage, sourceX, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY+HEADER_HEIGHT, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
       }
       if (value === 38) {
-        this.ctx.drawImage(this.layoutMap.layoutImage, this.animation.frame * this.layoutMap.tileWidth, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
+        this.ctx.drawImage(this.layoutMap.layoutImage, this.animation.frame * this.layoutMap.tileWidth, sourceY, this.layoutMap.tileWidth, this.layoutMap.tileHeight, destinationX, destinationY+HEADER_HEIGHT, this.layoutMap.tileWidth, this.layoutMap.tileHeight);
       }
     }
   }

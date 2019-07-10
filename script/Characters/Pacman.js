@@ -1,19 +1,16 @@
 class Pacman extends GameActors {
-  constructor(canvas, ctx, pacmanControlKey, gameMap, initialPosition) {
-    super(canvas, ctx, gameMap, initialPosition);
-
-    var position = null,
-      direction = null,
-      eaten = null,
-      due = null,
-      lives = null,
-      score = 5,
-      keyMap = {};
-
+  constructor(ctx, pacmanControlKey, gameMap, initialPosition) {
+    super(ctx, gameMap, initialPosition);
+    
+    this.lives = 5;
+    this.gameOver = false;
     this.dotsEaten = 0;
     this.energizerEaten = 0;
     this.fruitEaten = 0; //bonus symbols (commonly known as fruit)
     this.score = 0;
+
+
+    this.ghosts = null;
 
     //pacman key controls for moving
     this.pacmanControlKey = pacmanControlKey;
@@ -31,6 +28,9 @@ class Pacman extends GameActors {
     this.initPacman();
   }
 
+  setGhosts(ghosts) {
+    this.ghosts = ghosts;
+  }
 
   initPacman() {
     // event listeners
@@ -44,6 +44,48 @@ class Pacman extends GameActors {
     //set animation of pacman to left moving
     this.spriteAnimation.change(this.spriteSheet.frameSets[2], 5);
   }
+
+  /**
+   * returns whether the Ghost Hits pacman
+   *
+   * @param {*} ghostPosition
+   * @returns
+   * @memberof Pacman
+   */
+  hitPacman(ghostPosition) {
+    let xPositionDifference = Math.abs(this.position[0] - ghostPosition[0]);
+    let yPositionDifference = Math.abs(this.position[1] - ghostPosition[1]);
+
+    if (xPositionDifference < 10 && yPositionDifference < 10) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * called when a ghost hits pacman
+   *
+   * @memberof Pacman
+   */
+  kill() {
+    this.lives -= 1;
+    if (this.lives < 0) {//game over if no lives left
+      this.gameOver = true;
+      console.log('game over');
+    } else {
+      // pos = new PVector(13 * 16 + 8, 23 * 16 + 8);     //reset positions  
+
+      // blinky = new Blinky();
+      // clyde = new Clyde();
+      // pinky = new Pinky();
+      // inky = new Inky();
+      // vel = new PVector(-1, 0);
+      // turnTo = new PVector(-1, 0);
+
+      console.log('new game');
+    }
+  }
+
 
   /**
    * Draw and Move Pacman
@@ -76,16 +118,30 @@ class Pacman extends GameActors {
     // update animation to next frame
     this.spriteAnimation.update();
     // draw new frame pacman
-    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], this.spriteSheet.framePosition * this.dimensions[1], this.dimensions[0], this.dimensions[1], this.position[0], this.position[1], this.dimensions[0], this.dimensions[1]);
+    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], this.spriteSheet.framePosition * this.dimensions[1], this.dimensions[0], this.dimensions[1], this.position[0], this.position[1]+HEADER_HEIGHT, this.dimensions[0], this.dimensions[1]);
   }
 
   setPointsIfEaten() {
-    //get score from points
+    //get score from Dot eaten
     if (this.gameMap.getGamePointValueFromXY(this.tileFrom[0], this.tileFrom[1]) == DOT_VALUE) {
       let indexOfDot = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
       this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
       this.dotsEaten++;
       this.score += DOT_EATERN_SCORE; //each dot worth 10 points
+    }
+
+    //big dot - energizer eaten
+    if (this.gameMap.getGamePointValueFromXY(this.tileFrom[0], this.tileFrom[1]) == ENERZIER_VALUE) {
+      let indexOfEnerzier = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
+      this.gameMap.layoutMap.points[indexOfEnerzier] = EMPTY_DOT_EATEN_VALUE;
+      this.energizerEaten++;
+      this.score += ENERGIZER_EATEN_SCORE; //each dot worth 100 points
+
+      //set all ghosts in game to frightened
+      for (let i = 0; i < this.ghosts.length; i++) {
+        this.ghosts[i].frightened = true;
+        this.ghosts[i].flashCount = 0;
+      }
     }
   }
 

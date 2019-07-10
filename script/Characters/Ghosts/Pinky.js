@@ -1,6 +1,6 @@
 class Pinky extends Ghosts {
-  constructor(canvas, ctx, gameMap, initialPosition) {
-    super(canvas, ctx, gameMap, initialPosition);
+  constructor(ctx, gameMap, initialPosition, ghostScatterHomePosition) {
+    super(ctx, gameMap, initialPosition, ghostScatterHomePosition);
 
     this.spriteSheet.framePosition = 3;
 
@@ -9,7 +9,7 @@ class Pinky extends Ghosts {
     this.spriteAnimation.change(this.spriteSheet.frameSets[0], 5);
   }
 
-  getPointToFollow() {
+  getTargetToFollow() {
     //get new non-mutated array such that original don't change
     let currentPacmanLocation = this.pacman.tileFrom.slice(0);
     let pacmanMovingDirection = this.pacman.movingDirection;

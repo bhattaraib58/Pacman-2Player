@@ -7,14 +7,12 @@ class GameActors {
 
   /**
    *Creates an instance of GameActors.
-   * @param {*} canvas
    * @param {*} ctx
    * @param {*} gameMap
    * @param {*} initialPosition
    * @memberof GameActors
    */
-  constructor(canvas, ctx, gameMap, initialPosition) {
-    this.canvas = canvas;
+  constructor(ctx, gameMap, initialPosition) {
     this.ctx = ctx;
     this.gameMap = gameMap;
 
@@ -44,7 +42,7 @@ class GameActors {
     this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
 
     // the time in milliseconds it will take for character to move 1 tile
-    this.delayMove = 500;
+    this.delayMove = 100;
 
     //set animation objeect
     this.spriteAnimation = new Sprite();

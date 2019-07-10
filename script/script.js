@@ -1,18 +1,10 @@
-let canvas = document.getElementById('main-canvas');
+// when all scripts and window loded start laoding game assets and start game on completion
+window.addEventListener("load", function () {
+  // get canvas element
+  let canvas = document.getElementById('main-canvas');
+  //create game world
+  const gameWorld = new GameWorld(canvas);
+  //load game assets and start game
+  loadImages(GAME_IMAGES, gameWorld.init.bind(gameWorld));
+});
 
-let ctx = canvas.getContext("2d");
-
-let canvasWidth = window.innerWidth || document.documentElement.clientWidth || WIDTH;
-let canvasHeight = window.innerHeight || document.documentElement.clientHeight || HEIGHT;
-
-
-canvas.imageSmoothingEnabled = false;// This keeps the image looking sharp.
-
-canvas.clientHeight = 600;
-canvas.clientWidth = 500;
-canvas.height = 600;
-canvas.width = 500;
-
-const game = new Game(canvas, ctx);
-
-loadImages(GAME_IMAGES, () => { game.init(); });
