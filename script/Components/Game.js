@@ -1,12 +1,23 @@
 class Game {
-  constructor(canvas, ctx, gameWorldObject,layoutMap) {
+  constructor(canvas, ctx, gameWorldObject, layoutMap) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.gameWorldObject = gameWorldObject;
 
     this.layoutMap = JSON.parse(JSON.stringify(layoutMap));
-    this.layoutMapPLaying = JSON.parse(JSON.stringify(layoutMap));
     this.gameLevel = INITIAL_LEVEL;
+    this.gameMode = GAME_MODE.GAME_START;
+
+      //game pause state refers to when pacman dead or ghost dead, game end etc
+      this.gamePauseState = false;
+    this.ghostKilledScoreMultiplier = 0;
+    this.gameMode = GAME_MODE.GAME_START;
+    this.gameModeCounter = 0;
+    this.scoreDisplayCounter = 0;
+    this.isNewGameCreated = false;
+
+    //gamamap object
+    this.gameMap = null;
 
     // pacman object
     this.pacman1 = null;
@@ -16,36 +27,37 @@ class Game {
     this.blinky = null;
     this.pinky = null;
 
-    //gamamap object
-    this.gameMap = null;
-
-    this.gameMode = GAME_MODE.GAME_START;
-
     // currently which time we are on
     this.currentSecond = 0;
-
     // how much frame is currently displayed
     this.frameCount = 0;
     // how much frame we are having in this second
     this.framesLastSecond = 0;
 
-    this.scoreDisplayCounter = 0;
-    this.gameModeCounter = 0;
-
-    this.isNewGameCreated = false;
     this.init();
   }
 
   init() {
     let initialPosition = [14, 23];
-    this.gameMap = new GameMap(this.ctx, this.layoutMapPLaying);
+    this.createGameMap();
     this.pacman1 = new Pacman(this.ctx, this, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
-    this.createNewGame();
+  }
+
+  createGameMap() {
+    let layoutMapPLaying = JSON.parse(JSON.stringify(this.layoutMap));
+    this.gameMap = new GameMap(this.ctx, layoutMapPLaying);
   }
 
   createNewGame() {
     //all ghosts in game array
     let ghosts = [];
+
+    //game pause state refers to when pacman dead or ghost dead, game end etc
+    this.gamePauseState = false;
+    this.ghostKilledScoreMultiplier = 0;
+    this.gameModeCounter = 0;
+    this.scoreDisplayCounter = 0;
+    this.isNewGameCreated = false;
 
     let initialPosition = [14, 23].slice(0);
     this.pacman1.initPacman(initialPosition);
@@ -58,21 +70,43 @@ class Game {
       GHOST_SPRITE_POSITION.CHASE_MODE.BLINKY
     );
 
-    // this.pinky = new Pinky(
-    //   this.ctx,
-    //   this,
-    //   this.gameMap,
-    //   GHOST_POSITION.PINKY.INITIAL_POSITION,
-    //   GHOST_POSITION.PINKY.SCATTER_HOME_POSITION,
-    //   GHOST_SPRITE_POSITION.CHASE_MODE.PINKY
-    // );
+    this.pinky = new Pinky(
+      this.ctx,
+      this,
+      this.gameMap,
+      GHOST_POSITION.PINKY.INITIAL_POSITION,
+      GHOST_POSITION.PINKY.SCATTER_HOME_POSITION,
+      GHOST_SPRITE_POSITION.CHASE_MODE.PINKY
+    );
 
     this.blinky.setCurrenltyFollowingPacman(this.pacman1);
-    // this.pinky.setCurrenltyFollowingPacman(this.pacman1);
+    this.pinky.setCurrenltyFollowingPacman(this.pacman1);
 
     ghosts.push(this.blinky);
-    // ghosts.push(this.pinky);
+    ghosts.push(this.pinky);
     this.pacman1.setGhosts(ghosts);
+
+    this.pacman1.setGameMap(this.gameMap);
+  }
+
+
+  getScoreForGhostKilled() {
+    return GHOST_EATEN_SCORE * this.ghostKilledScoreMultiplier;
+  }
+
+  setGhostKilledMultiplier() {
+    // get current time in seconds
+    let sec = Math.floor(Date.now() / 1000);
+
+    // if current time is not equal to previous sec (1 sec has passed) 
+    if (sec >= this.currentSecond + 5) {
+      // set current sec to new time
+      this.currentSecond = sec;
+      this.ghostKilledScoreMultiplier = 0;
+    }
+    if (sec < this.currentSecond + 5) {
+      this.ghostKilledScoreMultiplier++;
+    }
   }
 
   draw() {
@@ -89,12 +123,13 @@ class Game {
 
     switch (this.gameMode) {
       case GAME_MODE.GAME_PLAYING:
+
         //draw pacman
         this.pacman1.draw();
         // this.pacman2.draw();
 
         this.blinky.moveGhosts();
-        // this.pinky.moveGhosts();
+        this.pinky.moveGhosts();
         break;
 
       case GAME_MODE.GAME_START:
@@ -114,6 +149,10 @@ class Game {
         break;
 
       case GAME_MODE.GAME_LEVEL_COMPLETED:
+        this.gameLevel++;
+        this.createGameMap();
+        this.createNewGame();
+        this.gameMode = GAME_MODE.GAME_START;
         break;
 
       case GAME_MODE.GAME_OVER:

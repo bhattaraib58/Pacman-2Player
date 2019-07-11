@@ -48,6 +48,10 @@ class Ghosts extends GameActors {
     this.deadForABit = false;
     this.deadCount = 0;
 
+    //this flag is used for hiding the ctx draw of ghost when pacman hits them
+    this.hideDrawImage = false;
+    this.hideImageCounter = 0;
+
     //set ghost images    
     super.setSpritePosition(this.ghostSpritePositionObject);
   }
@@ -58,34 +62,63 @@ class Ghosts extends GameActors {
 
     this.setFlagBasedOnGameMode();
 
-    // if we are currently moving dont set value
-    if (!super.processMovement(currentFrameTime)) {
+    //game pause state refers to when pacman dead or ghost dead, game end etc
+    if (!this.gameObject.gamePauseState) {
+      // if we are currently moving dont set value
+      if (!super.processMovement(currentFrameTime)) {
 
-      this.moveGhostBasedOnGameMode();
+        this.moveGhostBasedOnGameMode();
 
-      //move pacman based on direction set or continuing moving on direction set
-      super.moveActor();
+        //move pacman based on direction set or continuing moving on direction set
+        super.moveActor();
 
-      // after setting the values for key press event we set the 
-      // time moved (timeMoved= time we started moving the pacman) to current time 
-      if (this.tileFrom[0] != this.tileTo[0] ||
-        this.tileFrom[1] != this.tileTo[1]) {
-        this.timeMoved = currentFrameTime;
+        // after setting the values for key press event we set the 
+        // time moved (timeMoved= time we started moving the pacman) to current time 
+        if (this.tileFrom[0] != this.tileTo[0] ||
+          this.tileFrom[1] != this.tileTo[1]) {
+          this.timeMoved = currentFrameTime;
+        }
+      }
+      // update animation to next frame
+      this.spriteAnimation.updateSprite();
+    }
+
+    if (!this.hideDrawImage) {
+      // draw new frame pacman
+      this.ctx.drawImage(
+        this.spriteAnimation.image,
+        this.spriteAnimation.spriteXPosition * this.dimensions[0],
+        this.spriteAnimation.spriteYPosition * this.dimensions[1],
+        this.dimensions[0],
+        this.dimensions[1],
+        this.position[0],
+        this.position[1] + HEADER_HEIGHT,
+        this.dimensions[0],
+        this.dimensions[1]);
+    }
+    else {
+      this.writeGhostEatenScore(this.gameObject.getScoreForGhostKilled());
+      this.hideImageCounter++;
+
+      // show image after 30 frames have passed
+      if (this.hideImageCounter >= 30) {
+        this.hideDrawImage = false;
+        this.pacman.hideDrawImage = false;
+        this.gameObject.gamePauseState = false;
+        this.hideImageCounter = 0;
       }
     }
-    // update animation to next frame
-    this.spriteAnimation.updateSprite();
-    // draw new frame pacman
-    this.ctx.drawImage(
-      this.spriteAnimation.image,
-      this.spriteAnimation.spriteXPosition * this.dimensions[0],
-      this.spriteAnimation.spriteYPosition * this.dimensions[1],
-      this.dimensions[0],
-      this.dimensions[1],
+  }
+
+
+  writeGhostEatenScore(score) {
+    writeTextOnCanvasWithSize(
+      this.ctx,
+      score,
+      16,
+      '#38edfc',
       this.position[0],
-      this.position[1] + HEADER_HEIGHT,
-      this.dimensions[0],
-      this.dimensions[1]);
+      this.position[1] + HEADER_HEIGHT + this.gameMap.layoutMap.tileWidth);
   }
 
   /**
@@ -99,7 +132,7 @@ class Ghosts extends GameActors {
     if (this.deadForABit) {
       this.deadCount++;
       // if ghost has been dead for more  than 300 time then start moving ghost out of ghost home
-      if (this.deadCount > 300) {
+      if (this.deadCount > 20) {
         this.deadForABit = false;
         this.deadCount = 0;
       }
@@ -202,6 +235,12 @@ class Ghosts extends GameActors {
   checkGhostEatenOrPacmanEaten() {
     if (this.pacman.hitPacman(this.position)) {//if hit pacman
       if (this.frightened) {//eaten by pacman
+
+        this.gameObject.setGhostKilledMultiplier();
+        this.gameObject.gamePauseState = true;
+        this.hideDrawImage = true;
+        this.pacman.hideDrawImage = true;
+
         this.returnHome = true;
         this.frightened = false;
       } else if (!this.returnHome) {//sometimes when ghost returning home from being eaten can accidently trigger pacman kill
@@ -210,16 +249,17 @@ class Ghosts extends GameActors {
       }
     }
 
+
     // if eaten by pacman we have to move to home for respawn
     // check if reached home yet
     if (this.returnHome) {
-      //check if home reached
-      if (this.initialPosition[0] < this.position[0] + this.dimensions[0] &&
-        this.initialPosition[0] + this.dimensions[0] > this.position[0] &&
-        this.initialPosition[1] < this.position[1] + this.dimensions[1] &&
-        this.initialPosition[1] + this.dimensions[1] > this.position[1]) {
 
-        console.log('Home Reached::' + this.returnHome);
+      //check if home reached
+      if (
+        (this.initialPosition[0] * this.gameMap.layoutMap.tileWidth) < this.position[0] + this.dimensions[0] - 5 &&
+        (this.initialPosition[0] * this.gameMap.layoutMap.tileWidth) + this.dimensions[0] - 5 > this.position[0] &&
+        (this.initialPosition[1] * this.gameMap.layoutMap.tileHeight) < this.position[1] + this.dimensions[1] &&
+        (this.initialPosition[1] * this.gameMap.layoutMap.tileHeight) + this.dimensions[1] + HEADER_HEIGHT > this.position[1]) {
 
         //set the ghost as dead for a bit
         this.returnHome = false;

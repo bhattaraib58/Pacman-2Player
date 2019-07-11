@@ -9,11 +9,14 @@ class GameMap {
    * @param {*} layoutMap
    * @memberof GameMap
    */
-  constructor(ctx, layoutMap, mapImageSource) {
+  constructor(ctx, layoutMap) {
     this.ctx = ctx;
     this.layoutMap = layoutMap;
     this.mapImage = new Image();
     this.mapImage.src = this.layoutMap.image;
+
+    this.dotsRemaining = 242;
+    this.enerzierRemaining = 4;
 
     //for enerzier
     this.spriteAnimation = new Sprite(GAME_SYMBOLS.ENERGIZER.X,

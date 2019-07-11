@@ -31,10 +31,17 @@ class Pacman extends GameActors {
     this.ghosts = ghosts;
   }
 
+  setGameMap(gameMap) {
+    this.gameMap = gameMap;
+  }
+
   initPacman(initialPosition) {
     // the time in milliseconds it will take for character to move 1 tile
     // pacman game speed/ delay move is largerly dependedny on game mode and game level also
     this.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'normal');
+
+    //this flag is used for hiding the ctx draw of ghost when pacman hits them
+    this.hideDrawImage = false;
 
     //set animation of pacman to left moving
     super.setSpritePosition(PACMAN_SPRITE_POSITION.NORMAL);
@@ -61,39 +68,44 @@ class Pacman extends GameActors {
     // get current time in milliseconds
     let currentFrameTime = Date.now();
 
-    // if we are currently moving dont set value
-    if (!super.processMovement(currentFrameTime)) {
-      //set points if pacman eat point
-      this.setPointsIfEaten();
+    //game pause state refers to when pacman dead or ghost dead, game end etc
+    if (!this.gameObject.gamePauseState) {
+      // if we are currently moving dont set value
+      if (!super.processMovement(currentFrameTime)) {
+        //set points if pacman eat point
+        this.setPointsIfEaten();
 
-      //set pacman position and animation base on input
-      this.setPacmanAnimationAndPositionBasedOnKeyInput();
+        //set pacman position and animation base on input
+        this.setPacmanAnimationAndPositionBasedOnKeyInput();
 
-      //move pacman based on direction set or continuing moving on direction set
-      super.moveActor();
+        //move pacman based on direction set or continuing moving on direction set
+        super.moveActor();
 
-      // after setting the values for key press event we set the 
-      // time moved (timeMoved= time we started moving the pacman) to current time 
-      if (this.tileFrom[0] != this.tileTo[0] ||
-        this.tileFrom[1] != this.tileTo[1]) {
-        this.timeMoved = currentFrameTime;
+        // after setting the values for key press event we set the 
+        // time moved (timeMoved= time we started moving the pacman) to current time 
+        if (this.tileFrom[0] != this.tileTo[0] ||
+          this.tileFrom[1] != this.tileTo[1]) {
+          this.timeMoved = currentFrameTime;
+        }
       }
+      // update animation to next frame
+      this.spriteAnimation.updateSprite();
     }
 
-    // update animation to next frame
-    this.spriteAnimation.updateSprite();
-    // draw new frame pacman
-    this.ctx.drawImage(
-      this.spriteAnimation.image,
-      this.spriteAnimation.spriteXPosition * this.dimensions[0],
-      this.spriteAnimation.spriteYPosition * this.dimensions[1],
-      this.dimensions[0],
-      this.dimensions[1],
-      this.position[0],
-      this.position[1] + HEADER_HEIGHT,
-      this.dimensions[0],
-      this.dimensions[1]
-    );
+    if (!this.hideDrawImage) {
+      // draw new frame pacman
+      this.ctx.drawImage(
+        this.spriteAnimation.image,
+        this.spriteAnimation.spriteXPosition * this.dimensions[0],
+        this.spriteAnimation.spriteYPosition * this.dimensions[1],
+        this.dimensions[0],
+        this.dimensions[1],
+        this.position[0],
+        this.position[1] + HEADER_HEIGHT,
+        this.dimensions[0],
+        this.dimensions[1]
+      );
+    }
   }
 
   drawInitialSprite() {
@@ -183,8 +195,8 @@ class Pacman extends GameActors {
     if (this.lives < 0) {//game over if no lives left
       this.gameObject.gameMode = GAME_MODE.GAME_OVER;
     } else {
+      //start new game
       this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
-      console.log('new game');
     }
   }
 
@@ -194,7 +206,13 @@ class Pacman extends GameActors {
       let indexOfDot = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
       this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
       this.dotsEaten++;
+      this.gameMap.dotsRemaining--;
+
       this.score += DOT_EATERN_SCORE; //each dot worth 10 points
+
+      if (this.gameMap.dotsRemaining <= 0) {
+        this.gameObject.gameMode = GAME_MODE.GAME_LEVEL_COMPLETED;
+      }
     }
 
     //big dot - energizer eaten
@@ -202,6 +220,8 @@ class Pacman extends GameActors {
       let indexOfEnerzier = this.gameMap.toGameMapIndex(this.tileFrom[0], this.tileFrom[1]);
       this.gameMap.layoutMap.points[indexOfEnerzier] = EMPTY_DOT_EATEN_VALUE;
       this.energizerEaten++;
+      this.gameMap.enerzierRemaining--;
+
       this.score += ENERGIZER_EATEN_SCORE; //each dot worth 100 points
 
       //set pacman frightened speed

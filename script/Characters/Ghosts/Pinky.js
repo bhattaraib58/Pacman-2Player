@@ -2,11 +2,8 @@ class Pinky extends Ghosts {
   constructor(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject) {
     super(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject);
 
-    this.spriteSheet.framePosition = 3;
-
-    this.movingDirection = MOVING_DIRECTION.RIGHT;
-    /* To change the animation to moving up, with animation change in 5 sec. */
-    this.spriteAnimation.change(this.spriteSheet.frameSets[0], 5);
+    this.spriteAnimation.spriteXPosition = 3;
+    this.setMovingUpActorData();
   }
 
   getPacmanTargetPosition() {
