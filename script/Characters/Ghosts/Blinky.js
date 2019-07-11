@@ -1,11 +1,23 @@
 class Blinky extends Ghosts {
-  constructor(ctx, gameMap, initialPosition, ghostScatterHomePosition) {
-    super(ctx, gameMap, initialPosition, ghostScatterHomePosition);
+  constructor(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject) {
+    super(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject);
 
-    this.spriteSheet.framePosition = 2;
+    this.spriteAnimation.spriteXPosition = 2;
+    this.setMovingLeftActorData();
+  }
 
-    this.movingDirection = MOVING_DIRECTION.LEFT;
-    /* To change the animation to pacman moving up, with animation change in 5 sec. */
-    this.spriteAnimation.change(this.spriteSheet.frameSets[0], 5);
+  drawInitialSprite() {
+    // draw initail image of blinky
+    this.ctx.drawImage(
+      this.spriteAnimation.image,
+      4 * this.dimensions[0],
+      2 * this.dimensions[1],
+      this.dimensions[0],
+      this.dimensions[1],
+      this.position[0],
+      this.position[1] + HEADER_HEIGHT,
+      this.dimensions[0],
+      this.dimensions[1]
+    );
   }
 }

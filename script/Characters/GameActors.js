@@ -4,17 +4,18 @@
  * @class GameActors
  */
 class GameActors {
-
   /**
    *Creates an instance of GameActors.
    * @param {*} ctx
+   * @param {*} gameObject
    * @param {*} gameMap
    * @param {*} initialPosition
    * @memberof GameActors
    */
-  constructor(ctx, gameMap, initialPosition) {
+  constructor(ctx, gameObject, gameMap, initialPosition) {
     this.ctx = ctx;
     this.gameMap = gameMap;
+    this.gameObject = gameObject;
 
     // directions
     //default moving direction STOP position
@@ -33,8 +34,6 @@ class GameActors {
     // the dimension of character Width, height
     this.dimensions = [32, 32];
 
-    // this.position = [208, 360];
-
     // true position of charater in canvas
     // place of character in canvas in x,y position
     this.position = [2]; //2 items x and y in position
@@ -44,24 +43,23 @@ class GameActors {
     // the time in milliseconds it will take for character to move 1 tile
     this.delayMove = 100;
 
-    //set animation objeect
-    this.spriteAnimation = new Sprite();
-
     /* The sprite sheet object holds the sprite sheet graphic and some animation frame
       sets. An animation frame set is just an array of frame values that correspond to
       each sprite image in the sprite sheet, just like a tile sheet and a tile map. */
-    this.spriteSheet = {
-      animationDelay: 5,
-      framePosition: 0,
-      frameSets: [],//moving top, moving bottom, moving left, moving right frame set
-      image: new Image()
-    };
+    this.spriteXPositions = [];//moving top, moving bottom, moving left, moving right frame set
 
-    //set Game sprites
-    this.spriteSheet.image.src = PACMAN_SPRITES;
+    //set animation object
+    this.spriteAnimation = new Sprite(this.spriteXPositions[0], 5, PACMAN_SPRITES, 0);
   }
 
   //utility functions
+  setSpritePosition(spritePosition) {
+    this.spriteXPositions = spritePosition.X;
+    this.spriteAnimation.setSpriteXPosition(this.spriteXPositions[0]);
+    this.spriteAnimation.setSpriteYPosition(spritePosition.Y);
+    this.spriteAnimation.setAnimationDelay(spritePosition.DELAY_SPEED);
+  }
+
   isLocationEmpty() {
     return this.gameMap.getGameMapValueFromXY(this.tileFrom[0], this.tileFrom[1]) == MAZE_EMPTY_SPACE_VALUE ? true : false;
   }
@@ -83,23 +81,23 @@ class GameActors {
 
   setMovingUpActorData() {
     this.movingDirection = MOVING_DIRECTION.UP;
-    /* To change the animation to pacman moving up, with animation change in 5 sec. */
-    this.spriteAnimation.change(this.spriteSheet.frameSets[0], this.spriteSheet.animationDelay);
+    /* To change the animation to pacman moving up*/
+    this.spriteAnimation.setSpriteXPosition(this.spriteXPositions[0]);
   }
 
   setMovingDownActorData() {
     this.movingDirection = MOVING_DIRECTION.DOWN;
-    this.spriteAnimation.change(this.spriteSheet.frameSets[1], this.spriteSheet.animationDelay);
+    this.spriteAnimation.setSpriteXPosition(this.spriteXPositions[1]);
   }
 
   setMovingLeftActorData() {
     this.movingDirection = MOVING_DIRECTION.LEFT;
-    this.spriteAnimation.change(this.spriteSheet.frameSets[2], this.spriteSheet.animationDelay);
+    this.spriteAnimation.setSpriteXPosition(this.spriteXPositions[2]);
   }
 
   setMovingRightActorData() {
     this.movingDirection = MOVING_DIRECTION.RIGHT;
-    this.spriteAnimation.change(this.spriteSheet.frameSets[3], this.spriteSheet.animationDelay);
+    this.spriteAnimation.setSpriteXPosition(this.spriteXPositions[3]);
   }
 
   /**
@@ -116,7 +114,6 @@ class GameActors {
     if (this.tileTo[0] > this.gameMap.layoutMap.column) {
       this.tileTo[0] = -1;
     }
-
 
     // used to work as tunnel if top and bottom are empty pacman/ghosts can easily move in tunnel
     if (this.tileTo[1] < -1) {

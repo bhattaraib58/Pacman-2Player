@@ -5,30 +5,51 @@
  * @extends {GameActors}
  */
 class Ghosts extends GameActors {
-  constructor(ctx, gameMap, initialPosition, ghostScatterHomePosition) {
-    super(ctx, gameMap, initialPosition);
 
-    //currently following pacman
-    this.pacman = null;
-    this.previousMovingDirection = MOVING_DIRECTION.STOP;
+  /**
+   *Creates an instance of Ghosts.
+   * @param {*} ctx
+   * @param {*} gameObject
+   * @param {*} gameMap
+   * @param {*} initialPosition
+   * @param {*} ghostScatterHomePosition
+   * @param {*} ghostSpritePositionObject
+   * @param {*} currentlyFollowingGhostImagePosition
+   * @memberof Ghosts
+   */
+  constructor(ctx,
+    gameObject,
+    gameMap,
+    initialPosition,
+    ghostScatterHomePosition,
+    ghostSpritePositionObject) {
+    super(ctx, gameObject, gameMap, initialPosition);
 
     this.initialPosition = initialPosition;
     this.ghostScatterHomePosition = ghostScatterHomePosition;
-    this.ghostRealImagePosition = null;
+    this.ghostSpritePositionObject = ghostSpritePositionObject;
+
+    //currently following pacman
+    this.pacman = null;
+
+    this.previousMovingDirection = MOVING_DIRECTION.STOP;
+
+    this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'normal');
 
     this.chase = true;//true if the ghost is in chase mode false if in scatter mode
     this.frightened = false;//true if the ghost is in frightened mode
     this.flashCount = 0;//in order to make the ghost flash when frightened this is a counter
     this.chaseCount = 0;//counter for the switch between chase and scatter
     this.returnHome = false;//if eaten return home
+    this.frightenedModeEndingReminderCounter = 0;
 
     //after the ghost returns home it can't leave home for a bit
     //blinky can leave imediately but others take time
     this.deadForABit = false;
     this.deadCount = 0;
 
-    this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.CHASE_MODE.BLINKY.FRAME_POSITION;
-    this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.CHASE_MODE.FRAME_SETS;
+    //set ghost images    
+    super.setSpritePosition(this.ghostSpritePositionObject);
   }
 
   moveGhosts() {
@@ -53,10 +74,18 @@ class Ghosts extends GameActors {
       }
     }
     // update animation to next frame
-    this.spriteAnimation.update();
+    this.spriteAnimation.updateSprite();
     // draw new frame pacman
-    this.ctx.drawImage(this.spriteSheet.image, this.spriteAnimation.frame * this.dimensions[0], this.spriteSheet.framePosition * this.dimensions[1], this.dimensions[0], this.dimensions[1], this.position[0], this.position[1]+HEADER_HEIGHT, this.dimensions[0], this.dimensions[1]);
-
+    this.ctx.drawImage(
+      this.spriteAnimation.image,
+      this.spriteAnimation.spriteXPosition * this.dimensions[0],
+      this.spriteAnimation.spriteYPosition * this.dimensions[1],
+      this.dimensions[0],
+      this.dimensions[1],
+      this.position[0],
+      this.position[1] + HEADER_HEIGHT,
+      this.dimensions[0],
+      this.dimensions[1]);
   }
 
   /**
@@ -65,70 +94,81 @@ class Ghosts extends GameActors {
    * @memberof Ghosts
    */
   setFlagBasedOnGameMode() {
-    //increments counts
-    this.chaseCount++;
 
-    // check if on chase mode or on scatter mode
-    if (this.chase) {
-      // if the chasing time is greater than 2000 timer move to scatter mode
-      if (this.chaseCount > 200) {
-        //set chase mode sprites
-        this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.CHASE_MODE.BLINKY.FRAME_POSITION;
-        this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.CHASE_MODE.FRAME_SETS;
-        this.chase = false;
-        this.chaseCount = 0;
-      }
-    } else {
-      // if on scatter mode for mode than 700 timer move to chase mode
-      if (this.chaseCount > 700) {
-        this.chase = true;
-        this.chaseCount = 0;
-      }
-    }
-
-    // if ghost has returned home check if ghost is dead and if the time ghost 
-    // has been in dead mode more than 300 timer
+    //if dead mode don't move
     if (this.deadForABit) {
       this.deadCount++;
       // if ghost has been dead for more  than 300 time then start moving ghost out of ghost home
       if (this.deadCount > 300) {
         this.deadForABit = false;
+        this.deadCount = 0;
       }
-    } else {//if not deadforabit then show the ghost
-      if (!this.frightened) {
-        if (this.returnHome) {//have the ghost be transparent if on its way home
-          //set ghost with eye only sprite
-          this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.GHOST_MODE.FRAME_POSITION;
-          // set eye only sprite with top, down, left, right positions
-          this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.GHOST_MODE.FRAME_SETS;
+    }
+    //move pacman
+    else {
 
-        } else {
-          //set real image position of - blinky, clyde, pinky
-          // this.spriteSheet.framePosition = this.ghostRealImagePosition;
-          this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.CHASE_MODE.BLINKY.FRAME_POSITION;
-          this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.CHASE_MODE.FRAME_SETS;
-        }
-      } else {//if frightened
+      //frightened mode
+      if (this.frightened) {
         this.flashCount++;
 
-        //set frightened sprite and set image position
-        this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_BLUE.FRAME_POSITION;
-        this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_BLUE.FRAME_SETS;
+        super.setSpritePosition(GHOST_SPRITE_POSITION.FRIGHTENED_MODE_BLUE);
 
         if (this.flashCount > 800) {//after 8 seconds the ghosts are no longer frightened
           this.frightened = false;
           this.flashCount = 0;
-        }
-        //make it flash white and blue such that it reminds the frightened timer is going to stop
-        if (this.flashCount < 800 && this.flashCount > 600) {
-          if (Math.floor(this.flashCount / 30) % 2 == 0) {//make it flash white and blue every 30 frames
-            // flash blue
-            this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_BLUE.FRAME_POSITION;
-            this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_BLUE.FRAME_SETS;
+          this.frightenedModeEndingReminderCounter = 0;
 
-          } else {//flash white
-            this.spriteSheet.framePosition = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_WHITE.FRAME_POSITION;
-            this.spriteSheet.frameSets = GHOST_IMAGE_POSITIONS.FRIGHTENED_MODE_WHITE.FRAME_SETS;
+          //set image to normal
+          super.setSpritePosition(this.ghostSpritePositionObject);
+
+          //set pacman and ghost to normal speed
+          this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'NORMAL');
+          this.pacman.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'NORMAL');
+        }
+        // make it flash white and blue such that it reminds the frightened timer is going to stop
+        if (this.flashCount < 800 && this.flashCount > 600) {
+          this.frightenedModeEndingReminderCounter++;
+
+          // as blue ghost is already set in up we don't need to set blue ghost
+          //display white ghost for 15 frame
+          if (this.frightenedModeEndingReminderCounter >= 15 &&
+            this.frightenedModeEndingReminderCounter < 30) {//flash white
+            super.setSpritePosition(GHOST_SPRITE_POSITION.FRIGHTENED_MODE_WHITE);
+          }
+
+          //reset counter
+          if (this.frightenedModeEndingReminderCounter >= 30) {
+            this.frightenedModeEndingReminderCounter = 0;
+          }
+        }
+      }
+      else {
+        //if ghost is returing home when eaten by pacman
+        if (this.returnHome) {
+          super.setSpritePosition(GHOST_SPRITE_POSITION.GHOST_MODE);
+        }
+
+        //if not eaten by pacman ghost will change between chase mode and scatter mode
+        else {
+          //increments counts
+          this.chaseCount++;
+
+          // check if on chase mode or on scatter mode
+          if (this.chase) {
+            // if the chasing time is greater than 2000 timer move to scatter mode
+            if (this.chaseCount > 2000) {
+              //set chase mode sprites
+              super.setSpritePosition(this.ghostSpritePositionObject);
+
+              this.chase = false;
+              this.chaseCount = 0;
+            }
+          } else {
+            // if on scatter mode for mode than 700 timer move to chase mode
+            if (this.chaseCount > 700) {
+              this.chase = true;
+              this.chaseCount = 0;
+            }
           }
         }
       }
@@ -142,8 +182,7 @@ class Ghosts extends GameActors {
    * @memberof Ghosts
    */
   moveGhostBasedOnGameMode() {
-    if (!this.deadForABit) {//dont move if dead
-      // pos.add(vel);
+    if (!this.deadForABit) {//dont move if dead - move if not dead
       if (this.frightened) {
         this.frightenedMode();
       }
@@ -165,8 +204,8 @@ class Ghosts extends GameActors {
       if (this.frightened) {//eaten by pacman
         this.returnHome = true;
         this.frightened = false;
-      } else if (!this.returnHome) {
-        //killPacman and sometimes when ghost returning home from being eaten can accidently trigger pacman kill
+      } else if (!this.returnHome) {//sometimes when ghost returning home from being eaten can accidently trigger pacman kill
+        //kill Pacman 
         this.pacman.kill();
       }
     }
@@ -174,14 +213,24 @@ class Ghosts extends GameActors {
     // if eaten by pacman we have to move to home for respawn
     // check if reached home yet
     if (this.returnHome) {
-      let xPositionDifference = Math.abs(this.position[0] - this.initialPosition[0]);
-      let yPositionDifference = Math.abs(this.position[1] - this.initialPosition[1]);
+      //check if home reached
+      if (this.initialPosition[0] < this.position[0] + this.dimensions[0] &&
+        this.initialPosition[0] + this.dimensions[0] > this.position[0] &&
+        this.initialPosition[1] < this.position[1] + this.dimensions[1] &&
+        this.initialPosition[1] + this.dimensions[1] > this.position[1]) {
 
-      if (xPositionDifference < 10 && yPositionDifference < 10) {
+        console.log('Home Reached::' + this.returnHome);
+
         //set the ghost as dead for a bit
         this.returnHome = false;
         this.deadForABit = true;
         this.deadCount = 0;
+
+        //set real image position of - blinky, clyde, pinky
+        super.setSpritePosition(this.ghostSpritePositionObject);
+
+        // set speed to normal
+        this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'NORMAL');
       }
     }
   }
@@ -222,6 +271,19 @@ class Ghosts extends GameActors {
     this.pacman = pacman;
   }
 
+
+  /**
+   * Used To get in which position to target pacman
+   * this function is to be overiden by child classes of ghost to set different 
+   * positions to target pacman
+   *
+   * @returns
+   * @memberof Ghosts
+   */
+  getPacmanTargetPosition() {
+    return this.pacman.tileFrom;//target pacman
+  }
+
   /**
    * Based on Game mode (scatter mode, chase mode, dead mode),
    * get target to follow
@@ -230,12 +292,12 @@ class Ghosts extends GameActors {
    * @memberof Ghosts
    */
   getTargetToFollow() {
-    if (this.returnHome) {//if returning home then the target is just above the ghost room
+    if (this.returnHome) {//if returning home then the target is just above the ghost room or inside ghost box
       return this.initialPosition;
     } else {
       // if on chase mode target pacman
       if (this.chase) {
-        return this.pacman.tileFrom;//target pacman
+        return this.getPacmanTargetPosition();
       } else {//if on scatter mode target respective corner
         return this.ghostScatterHomePosition; //scatter to corner
       }
@@ -291,6 +353,7 @@ class Ghosts extends GameActors {
 
     //get which point to follow
     let getTargetToFollow = this.getTargetToFollow();
+
     let differenceInXAxis = this.tileFrom[0] - getTargetToFollow[0];
     let differenceInYAxis = this.tileFrom[1] - getTargetToFollow[1];
 

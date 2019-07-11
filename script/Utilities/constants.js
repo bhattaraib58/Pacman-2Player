@@ -31,6 +31,7 @@ const GAME_STATE = {
   TWO_PLAYER_MODE: 400,
   HIGH_SCORE_DISPLAY: 500
 };
+
 const GAME_MODE = {
   GAME_START: 0,
   GAME_BEGIN: 1,
@@ -38,45 +39,6 @@ const GAME_MODE = {
   PACMAN_DEAD: 3,
   GAME_LEVEL_COMPLETED: 4,
   GAME_OVER: 5,
-};
-
-//game images
-const PACMAN_TILES = 'image/pacman-tiles.png';
-const PACMAN_SPRITES = 'image/sprites32.png';
-const PACMAN_LOGO = 'image/pacman-logo.png';
-
-const GAME_IMAGES = [
-  PACMAN_TILES,
-  PACMAN_SPRITES,
-  PACMAN_LOGO
-];
-
-const PACMAN_SPRITE_IMAGE = new Image();
-PACMAN_SPRITE_IMAGE.src = PACMAN_SPRITES;
-
-const PACMAN_LOGO_IMAGE = new Image();
-PACMAN_LOGO_IMAGE.src = PACMAN_LOGO;
-
-const GHOST_IMAGE_POSITIONS = {
-  CHASE_MODE: {
-    BLINKY: { FRAME_POSITION: 2 },
-    PINKY: { FRAME_POSITION: 3 },
-    INKY: { FRAME_POSITION: 4 },
-    CLYDE: { FRAME_POSITION: 5 },
-    FRAME_SETS: [[6, 7], [2, 3], [4, 5], [0, 1]]
-  },
-  GHOST_MODE: {
-    FRAME_POSITION: 6,
-    FRAME_SETS: [[6], [2], [4], [0]]
-  },
-  FRIGHTENED_MODE_BLUE: {
-    FRAME_POSITION: 7,
-    FRAME_SETS: [[0, 1], [0, 1], [0, 1], [0, 1]]
-  },
-  FRIGHTENED_MODE_WHITE: {
-    FRAME_POSITION: 7,
-    FRAME_SETS: [[2, 3], [2, 3], [2, 3], [2, 3]]
-  },
 };
 
 const GHOST_POSITION = {
@@ -91,32 +53,6 @@ const GHOST_POSITION = {
 };
 
 
-const PACMAN_MAX_LIVES = 5;
-const INITIAL_LEVEL = 1;
-
-//game level- game level corresponding image position
-const GAME_LEVEL = {
-  1: 3,
-  2: 2,
-  3: 1,
-  4: 1,
-  5: 0,
-  6: 0,
-  7: 4,
-  8: 4,
-  9: 5,
-  10: 5,
-  11: 6,
-  12: 6,
-  13: 7,
-  14: 7,
-  15: 7,
-  16: 7,
-  17: 7,
-  18: 7,
-  19: 7,
-  20: 7
-};
 
 //game scores and values
 const DOT_EATERN_SCORE = 10;
@@ -127,6 +63,79 @@ const MAZE_EMPTY_SPACE_VALUE = 13;
 const EMPTY_DOT_EATEN_VALUE = 36;
 const DOT_VALUE = 37;
 const ENERZIER_VALUE = 38;
+
+//game values
+const PACMAN_MAX_LIVES = 5;
+const PACMAN_INITIAL_LIVES = 2;
+const INITIAL_LEVEL = 1;
+
+//maximum full speed of pacman, 
+//ghost and pacman use this value to set their speed based on game level and game mode
+const PACMAN_MAX_SPEED = 65;
+
+const CHARACTERS_SPEED = {
+  //character:{game level:{game mode:speed percentage which later will be taken relative to pacman max speed}}
+  PACMAN: {
+    1: {
+      NORMAL: 80, //when scatter/chase mode
+      FRIGHT: 90 //when frightened mode
+    },
+    2: {
+      NORMAL: 90, //when scatter/chase mode
+      FRIGHT: 95 //when frightened mode
+    },
+    5: {
+      NORMAL: 100, //when scatter/chase mode
+      FRIGHT: 100 //when frightened mode
+    },
+    21: {
+      NORMAL: 90, //when scatter/chase mode
+      FRIGHT: 100 //when frightened mode
+    }
+  },
+  GHOST: {
+    1: {
+      NORMAL: 75, //when scatter/chase mode
+      FRIGHT: 50 //when frightened mode
+    },
+    2: {
+      NORMAL: 85, //when scatter/chase mode
+      FRIGHT: 55 //when frightened mode
+    },
+    5: {
+      NORMAL: 95, //when scatter/chase mode
+      FRIGHT: 60 //when frightened mode
+    },
+    21: {
+      NORMAL: 95, //when scatter/chase mode
+      FRIGHT: 100 //when frightened mode
+    }
+  }
+};
+
+//game level- game level corresponding image position
+const GAME_LEVEL = {
+  1: 3, //cherry
+  2: 2, //strawberry
+  3: 1,  //peach
+  4: 1,  //peach
+  5: 0, //apple
+  6: 0, //apple
+  7: 4, //water melon
+  8: 4, //water melon
+  9: 5, //falcon
+  10: 5, //falcon
+  11: 6, //bell
+  12: 6,//bell
+  13: 7,//key
+  14: 7,
+  15: 7,
+  16: 7,
+  17: 7,
+  18: 7,
+  19: 7,
+  20: 7
+};
 
 //map layout
 const LAYOUT_MAP_ORIGINAL = {
@@ -200,11 +209,10 @@ const LAYOUT_MAP_ORIGINAL = {
     ],
   row: 31,
   column: 28,
-  layoutImage: new Image(),// the tiles image/The actual graphic will be loaded into this.
   tileWidth: 16,
-  tileHeight: 16
+  tileHeight: 16,
+  image: PACMAN_TILES
 };
-LAYOUT_MAP_ORIGINAL.layoutImage.src = PACMAN_TILES; //set the tile image
 
 const HEADER_HEIGHT = 60;
 const FOOTER_HEIGHT = 40;

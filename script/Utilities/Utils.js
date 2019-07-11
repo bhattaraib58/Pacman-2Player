@@ -64,3 +64,30 @@ function writeTextOnCanvasWithSize(ctx, text, fontSize, fontColor, x, y) {
   ctx.fillStyle = fontColor;
   ctx.fillText(text, x, y);
 }
+
+
+/**
+ * Get Character Speed from the CHARACTER_SPEED value in constant
+ *
+ * @param {*} characterName
+ * @param {*} gameLevel
+ * @param {*} gameMode
+ * @returns
+ */
+function getCharacterSpeed(characterName, gameLevel, gameMode) {
+  characterName = characterName.toUpperCase();
+  gameLevel = parseInt(gameLevel);
+  gameMode = gameMode.toUpperCase();
+
+  //less than level 1 has same speed
+  if (gameLevel <= 1) { gameLevel = 1; }
+  //level 2 to 4 has same speed
+  if (gameLevel >= 2 && gameLevel <= 4) { gameLevel = 2; }
+  //level 5 to 20 has speed
+  if (gameLevel >= 5 && gameLevel <= 20) { gameLevel = 5; }
+  if (gameLevel >= 21) { gameLevel = 21; }
+
+  let characterSpeedPercentage = CHARACTERS_SPEED[characterName][gameLevel][gameMode];
+  let speed = PACMAN_MAX_SPEED + ((300 - characterSpeedPercentage * 3) / 100) * PACMAN_MAX_SPEED;
+  return speed;
+}

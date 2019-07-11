@@ -18,7 +18,7 @@ class GameWorld {
     this.ctx.imageSmoothingEnabled = false;// This keeps the image looking sharp.
 
     // this.gameState = GAME_STATE.MENU;
-    this.gameState = GAME_STATE.SINGLE_PLAYER;
+    this.gameState = GAME_STATE.MENU;
     this.gameMenu = null;
     this.singlePlayerGame = null;
 
@@ -57,6 +57,6 @@ class GameWorld {
 
   resetGameComponents() {
     this.gameMenu = new GameMenu(this.ctx, this);
-    this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this);
+    this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this,LAYOUT_MAP_ORIGINAL);
   }
 }

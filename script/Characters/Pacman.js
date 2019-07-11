@@ -1,15 +1,13 @@
 class Pacman extends GameActors {
   constructor(ctx, gameObject, pacmanControlKey, gameMap, initialPosition) {
-    super(ctx, gameMap, initialPosition);
+    super(ctx, gameObject, gameMap, initialPosition);
 
-    this.gameObject = gameObject;
-    this.lives = 3;
+    this.lives = 2;
     this.gameOver = false;
     this.dotsEaten = 0;
     this.energizerEaten = 0;
     this.fruitEaten = 0; //bonus symbols (commonly known as fruit)
     this.score = 0;
-
 
     this.ghosts = null;
 
@@ -21,9 +19,6 @@ class Pacman extends GameActors {
     this.keyDownPressed = false;
     this.keyLeftPressed = false;
     this.keyRightPressed = false;
-
-    // the time in milliseconds it will take for character to move 1 tile
-    this.delayMove = 100;
 
     // event listeners
     this.addEventListeners();
@@ -37,13 +32,15 @@ class Pacman extends GameActors {
   }
 
   initPacman(initialPosition) {
-    //set initial moving of pacman to left
-    this.movingDirection = MOVING_DIRECTION.LEFT;
-    this.spriteSheet.framePosition = 0; //pacman is on y index 0 on sprite sheet
-    this.spriteSheet.frameSets = [[5, 6, 2, 6], [7, 8, 2, 8], [4, 3, 2, 3], [0, 1, 2, 1]];//moving top, moving bottom, moving left, moving right
+    // the time in milliseconds it will take for character to move 1 tile
+    // pacman game speed/ delay move is largerly dependedny on game mode and game level also
+    this.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'normal');
 
     //set animation of pacman to left moving
-    this.spriteAnimation.change(this.spriteSheet.frameSets[2], 5);
+    super.setSpritePosition(PACMAN_SPRITE_POSITION.NORMAL);
+
+    this.spriteAnimation.spriteXPosition = 2;
+    this.setMovingLeftActorData();
 
     //slice and generate new non mutating array such that the values don't override
     this.tileFrom = initialPosition.slice(0);
@@ -54,39 +51,6 @@ class Pacman extends GameActors {
     this.position[0] = (this.tileFrom[0] * this.gameMap.layoutMap.tileWidth) + ((this.gameMap.layoutMap.tileWidth - this.dimensions[0]) / 2);
     this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
   }
-
-  /**
-   * returns whether the Ghost Hits pacman
-   *
-   * @param {*} ghostPosition
-   * @returns
-   * @memberof Pacman
-   */
-  hitPacman(ghostPosition) {
-    let xPositionDifference = Math.abs(this.position[0] - ghostPosition[0]);
-    let yPositionDifference = Math.abs(this.position[1] - ghostPosition[1]);
-
-    if (xPositionDifference < 5 && yPositionDifference < 5) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * called when a ghost hits pacman
-   *
-   * @memberof Pacman
-   */
-  kill() {
-    this.lives -= 1;
-    if (this.lives < 0) {//game over if no lives left
-      this.gameObject.gameMode = GAME_MODE.GAME_OVER;
-    } else {
-      this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
-      console.log('new game');
-    }
-  }
-
 
   /**
    * Draw and Move Pacman
@@ -117,12 +81,12 @@ class Pacman extends GameActors {
     }
 
     // update animation to next frame
-    this.spriteAnimation.update();
+    this.spriteAnimation.updateSprite();
     // draw new frame pacman
     this.ctx.drawImage(
-      this.spriteSheet.image,
-      this.spriteAnimation.frame * this.dimensions[0],
-      this.spriteSheet.framePosition * this.dimensions[1],
+      this.spriteAnimation.image,
+      this.spriteAnimation.spriteXPosition * this.dimensions[0],
+      this.spriteAnimation.spriteYPosition * this.dimensions[1],
       this.dimensions[0],
       this.dimensions[1],
       this.position[0],
@@ -135,9 +99,9 @@ class Pacman extends GameActors {
   drawInitialSprite() {
     // draw new frame pacman
     this.ctx.drawImage(
-      this.spriteSheet.image,
-      2 * this.dimensions[0],
-      0 * this.dimensions[1],
+      this.spriteAnimation.image,
+      PACMAN_SPRITE_POSITION.INITAL.X * this.dimensions[0],
+      PACMAN_SPRITE_POSITION.INITAL.Y * this.dimensions[1],
       this.dimensions[0],
       this.dimensions[1],
       this.position[0],
@@ -149,18 +113,20 @@ class Pacman extends GameActors {
 
   drawPacmanDead() {
     // if all being dead sprite shown return as false to indicate to move on
-    if (this.spriteAnimation.frame >= 10) {
+    if (this.spriteAnimation.spriteXPosition >= 11) {
       return false;
     }
     this.removeEventListeners();
     this.setDeadSpriteOfPacman();
+
     // update animation to next frame
-    this.spriteAnimation.update();
+    this.spriteAnimation.updateSprite();
+
     // draw new frame pacman
     this.ctx.drawImage(
-      this.spriteSheet.image,
-      this.spriteAnimation.frame * this.dimensions[0],
-      this.spriteSheet.framePosition * this.dimensions[1],
+      this.spriteAnimation.image,
+      this.spriteAnimation.spriteXPosition * this.dimensions[0],
+      this.spriteAnimation.spriteYPosition * this.dimensions[1],
       this.dimensions[0],
       this.dimensions[1],
       this.position[0],
@@ -173,14 +139,53 @@ class Pacman extends GameActors {
 
   setDeadSpriteOfPacman() {
     // return if dead sprite already set
-    if (this.spriteSheet.framePosition == 1) {
+    if (this.spriteAnimation.spriteYPosition == PACMAN_SPRITE_POSITION.DEAD.Y) {
       return;
     }
     // set sprite to dead
-    this.spriteSheet.framePosition = 1;
-    this.spriteSheet.frameSets = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]];
-    this.spriteAnimation.change(this.spriteSheet.frameSets[0], 10);
-    this.spriteAnimation.frame = 0;
+    super.setSpritePosition(PACMAN_SPRITE_POSITION.DEAD);
+    this.spriteAnimation.spriteXPosition = 0;
+  }
+
+
+  /**
+   * returns whether the Ghost Hits pacman
+   *
+   * @param {*} ghostPosition
+   * @returns
+   * @memberof Pacman
+   */
+  hitPacman(ghostPosition) {
+    // if (rect1.x < rect2.x + rect2.width &&
+    //   rect1.x + rect1.width > rect2.x &&
+    //   rect1.y < rect2.y + rect2.height &&
+    //   rect1.y + rect1.height > rect2.y) {
+    //   // collision detected!
+    // }
+
+    if (ghostPosition[0] < this.position[0] + this.dimensions[0] - 5 &&
+      ghostPosition[0] + this.dimensions[0] - 5 > this.position[0] &&
+      ghostPosition[1] < this.position[1] + this.dimensions[1] - 5 &&
+      ghostPosition[1] + this.dimensions[1] - 5 > this.position[1]) {
+      // collision detected!
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * called when a ghost hits pacman
+   *
+   * @memberof Pacman
+   */
+  kill() {
+    this.lives -= 1;
+    if (this.lives < 0) {//game over if no lives left
+      this.gameObject.gameMode = GAME_MODE.GAME_OVER;
+    } else {
+      this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
+      console.log('new game');
+    }
   }
 
   setPointsIfEaten() {
@@ -199,10 +204,18 @@ class Pacman extends GameActors {
       this.energizerEaten++;
       this.score += ENERGIZER_EATEN_SCORE; //each dot worth 100 points
 
+      //set pacman frightened speed
+      this.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'FRIGHT');
+
       //set all ghosts in game to frightened
       for (let i = 0; i < this.ghosts.length; i++) {
-        this.ghosts[i].frightened = true;
-        this.ghosts[i].flashCount = 0;
+
+        //if ghost is returing home don't set it to frightened mode
+        if (!this.ghosts[i].returnHome) {
+          this.ghosts[i].frightened = true;
+          this.ghosts[i].flashCount = 0;
+          this.ghosts[i].delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'FRIGHT');
+        }
       }
     }
   }
@@ -262,35 +275,10 @@ class Pacman extends GameActors {
     window.removeEventListener('keyup', this.keyUpHandler, false);
   }
 
-
-
   addScore(nScore) {
     score += nScore;
     if (score >= 10000 && score - nScore < 10000) {
       lives += 1;
     }
-  };
-
-  theScore() {
-    return score;
-  };
-
-  loseLife() {
-    lives -= 1;
-  };
-
-  getLives() {
-    return lives;
-  };
-
-  initUser() {
-    score = 0;
-    lives = 3;
-    newLevel();
   }
-
-  newLevel() {
-    resetPosition();
-    eaten = 0;
-  };
 }
