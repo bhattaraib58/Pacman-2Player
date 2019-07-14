@@ -1,20 +1,21 @@
 class Game {
-  constructor(canvas, ctx, gameWorldObject, layoutMap) {
+  constructor(canvas, ctx, gameWorldObject, audioLoader, layoutMap) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.gameWorldObject = gameWorldObject;
+    this.audioLoader = audioLoader;
 
     this.layoutMap = JSON.parse(JSON.stringify(layoutMap));
     this.gameLevel = INITIAL_LEVEL;
     this.gameMode = GAME_MODE.GAME_START;
 
-      //game pause state refers to when pacman dead or ghost dead, game end etc
-      this.gamePauseState = false;
+    //game pause state refers to when pacman dead or ghost dead, game end etc
+    this.gamePauseState = false;
     this.ghostKilledScoreMultiplier = 0;
-    this.gameMode = GAME_MODE.GAME_START;
     this.gameModeCounter = 0;
     this.scoreDisplayCounter = 0;
     this.isNewGameCreated = false;
+    this.hasPlayed = false;
 
     //gamamap object
     this.gameMap = null;
@@ -26,6 +27,8 @@ class Game {
     //game ghosts
     this.blinky = null;
     this.pinky = null;
+    this.inky = null;
+    this.clyde = null;
 
     // currently which time we are on
     this.currentSecond = 0;
@@ -40,7 +43,8 @@ class Game {
   init() {
     let initialPosition = [14, 23];
     this.createGameMap();
-    this.pacman1 = new Pacman(this.ctx, this, PLAYER1_CONTROL_KEY, this.gameMap, initialPosition);
+    this.pacman1 = new Pacman(this.ctx, this, PLAYER1_CONTROL_KEY, this.gameMap, this.audioLoader, initialPosition);
+    // this.pacman2 = new Pacman(this.ctx, this, PLAYER2_CONTROL_KEY, this.gameMap, initialPosition);
   }
 
   createGameMap() {
@@ -58,15 +62,17 @@ class Game {
     this.gameModeCounter = 0;
     this.scoreDisplayCounter = 0;
     this.isNewGameCreated = false;
+    this.hasPlayed = false;
 
     let initialPosition = [14, 23].slice(0);
     this.pacman1.initPacman(initialPosition);
+    // this.pacman2.initPacman(initialPosition);
 
     this.blinky = new Blinky(this.ctx,
       this,
       this.gameMap,
-      GHOST_POSITION.BLINKY.INITIAL_POSITION,
-      GHOST_POSITION.BLINKY.SCATTER_HOME_POSITION,
+      this.audioLoader,
+      GHOST_POSITION.BLINKY,
       GHOST_SPRITE_POSITION.CHASE_MODE.BLINKY
     );
 
@@ -74,17 +80,40 @@ class Game {
       this.ctx,
       this,
       this.gameMap,
-      GHOST_POSITION.PINKY.INITIAL_POSITION,
-      GHOST_POSITION.PINKY.SCATTER_HOME_POSITION,
+      this.audioLoader,
+      GHOST_POSITION.PINKY,
       GHOST_SPRITE_POSITION.CHASE_MODE.PINKY
+    );
+
+    this.inky = new Inky(
+      this.ctx,
+      this,
+      this.gameMap,
+      this.audioLoader,
+      GHOST_POSITION.INKY,
+      GHOST_SPRITE_POSITION.CHASE_MODE.INKY
+    );
+
+    this.clyde = new Clyde(
+      this.ctx,
+      this,
+      this.gameMap,
+      this.audioLoader,
+      GHOST_POSITION.CLYDE,
+      GHOST_SPRITE_POSITION.CHASE_MODE.CLYDE
     );
 
     this.blinky.setCurrenltyFollowingPacman(this.pacman1);
     this.pinky.setCurrenltyFollowingPacman(this.pacman1);
+    this.inky.setCurrenltyFollowingPacman(this.pacman1);
+    this.clyde.setCurrenltyFollowingPacman(this.pacman1);
 
     ghosts.push(this.blinky);
     ghosts.push(this.pinky);
+    ghosts.push(this.inky);
+    ghosts.push(this.clyde);
     this.pacman1.setGhosts(ghosts);
+    // this.pacman2.setGhosts(ghosts);
 
     this.pacman1.setGameMap(this.gameMap);
   }
@@ -123,6 +152,7 @@ class Game {
 
     switch (this.gameMode) {
       case GAME_MODE.GAME_PLAYING:
+        // this.audioLoader.stop('opening_song');
 
         //draw pacman
         this.pacman1.draw();
@@ -130,9 +160,15 @@ class Game {
 
         this.blinky.moveGhosts();
         this.pinky.moveGhosts();
+        this.inky.moveGhosts();
+        this.clyde.moveGhosts();
         break;
 
       case GAME_MODE.GAME_START:
+        if (!this.hasPlayed) {
+          this.audioLoader.play('opening_song');
+          this.hasPlayed = true;
+        }
         this.drawGameStartingScreen();
         break;
 
@@ -141,27 +177,39 @@ class Game {
         break;
 
       case GAME_MODE.PACMAN_DEAD:
+        if (!this.hasPlayed) {
+          this.audioLoader.play('die');
+          this.hasPlayed = true;
+        }
         //draw pacman dead, if animation not completed to show dead pacman start new game
         if (!this.pacman1.drawPacmanDead()) {
           this.gameMode = GAME_MODE.GAME_BEGIN;
           this.isNewGameCreated = false;
+          this.hasPlayed = false;
         }
         break;
 
       case GAME_MODE.GAME_LEVEL_COMPLETED:
-        this.gameLevel++;
-        this.createGameMap();
-        this.createNewGame();
-        this.gameMode = GAME_MODE.GAME_START;
+        if (this.drawLevelCompleted()) {
+          this.gameLevel++;
+          this.createGameMap();
+          this.createNewGame();
+          this.gameMode = GAME_MODE.GAME_START;
+        }
         break;
 
       case GAME_MODE.GAME_OVER:
+        if (!this.hasPlayed) {
+          this.audioLoader.play('die');
+          this.hasPlayed = true;
+        }
         //draw pacman dead, if animation not completed to show dead pacman dont show game over
         if (!this.pacman1.drawPacmanDead()) {
           this.gameModeCounter++;
           this.drawGameover();
           if (this.gameModeCounter > 100) {
             this.gameWorldObject.gameState = GAME_STATE.MENU;
+            this.hasPlayed = false;
           }
         }
         break;
@@ -191,6 +239,7 @@ class Game {
 
     if (this.gameModeCounter >= 100) {
       this.gameMode = GAME_MODE.GAME_BEGIN;
+      this.hasPlayed = false;
     }
   }
 
@@ -203,7 +252,11 @@ class Game {
     this.gameModeCounter++;
 
     this.blinky.drawInitialSprite();
+    this.pinky.drawInitialSprite();
+    this.inky.drawInitialSprite();
+    this.clyde.drawInitialSprite();
     this.pacman1.drawInitialSprite();
+    // this.pacman2.drawInitialSprite();
 
     writeTextOnCanvasWithSize(this.ctx,
       'READY!',
@@ -228,6 +281,38 @@ class Game {
       HEADER_HEIGHT + (18 * 16)
     );
   }
+
+  drawLevelCompleted() {
+    this.gameModeCounter++;
+    this.gamePauseState = true;
+
+    //display 1 UP for 15 frames and dont show for 15 frame
+    if (this.scoreDisplayCounter >= 15 && this.scoreDisplayCounter < 30) {
+      // clear canvas
+      this.ctx.fillStyle = '#000000';
+      this.ctx.fillRect(0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
+    }
+
+    this.pacman1.drawInitialSprite();
+
+    //reset counter
+    if (this.scoreDisplayCounter >= 30) {
+      this.scoreDisplayCounter = 0;
+    }
+
+    if (this.gameModeCounter >= 150) {
+      this.gameModeCounter = 0;
+      this.gameMode = GAME_MODE.GAME_PLAYING;
+      return true;
+    }
+
+    return false;
+  }
+
 
   drawPacmanGameHeader() {
     this.scoreDisplayCounter++;

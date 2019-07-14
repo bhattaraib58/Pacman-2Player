@@ -1,6 +1,10 @@
 class Blinky extends Ghosts {
-  constructor(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject) {
-    super(ctx, gameObject, gameMap, initialPosition, ghostScatterHomePosition, ghostSpritePositionObject);
+  constructor(ctx, gameObject, gameMap, audioLoader,ghostPosition, ghostSpritePositionObject) {
+    super(ctx, gameObject, gameMap, audioLoader,ghostPosition, ghostSpritePositionObject);
+
+
+    this.deadForABit=false;
+    this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'NORMAL');
 
     this.spriteAnimation.spriteXPosition = 2;
     this.setMovingLeftActorData();

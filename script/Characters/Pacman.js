@@ -1,7 +1,8 @@
 class Pacman extends GameActors {
-  constructor(ctx, gameObject, pacmanControlKey, gameMap, initialPosition) {
+  constructor(ctx, gameObject, pacmanControlKey, gameMap, audioLoader, initialPosition) {
     super(ctx, gameObject, gameMap, initialPosition);
 
+    this.audioLoader = audioLoader;
     this.lives = 2;
     this.gameOver = false;
     this.dotsEaten = 0;
@@ -168,17 +169,10 @@ class Pacman extends GameActors {
    * @memberof Pacman
    */
   hitPacman(ghostPosition) {
-    // if (rect1.x < rect2.x + rect2.width &&
-    //   rect1.x + rect1.width > rect2.x &&
-    //   rect1.y < rect2.y + rect2.height &&
-    //   rect1.y + rect1.height > rect2.y) {
-    //   // collision detected!
-    // }
-
-    if (ghostPosition[0] < this.position[0] + this.dimensions[0] - 5 &&
-      ghostPosition[0] + this.dimensions[0] - 5 > this.position[0] &&
-      ghostPosition[1] < this.position[1] + this.dimensions[1] - 5 &&
-      ghostPosition[1] + this.dimensions[1] - 5 > this.position[1]) {
+    if (ghostPosition[0] < this.position[0] + this.dimensions[0] - 8 &&
+      ghostPosition[0] + this.dimensions[0] - 8 > this.position[0] &&
+      ghostPosition[1] < this.position[1] + this.dimensions[1] - 8 &&
+      ghostPosition[1] + this.dimensions[1] - 8 > this.position[1]) {
       // collision detected!
       return true;
     }
@@ -207,8 +201,10 @@ class Pacman extends GameActors {
       this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
       this.dotsEaten++;
       this.gameMap.dotsRemaining--;
+      this.audioLoader.play('eating',1.4);
 
-      this.score += DOT_EATERN_SCORE; //each dot worth 10 points
+      // this.score += DOT_EATERN_SCORE; //each dot worth 10 points
+      this.addScore(DOT_EATERN_SCORE);
 
       if (this.gameMap.dotsRemaining <= 0) {
         this.gameObject.gameMode = GAME_MODE.GAME_LEVEL_COMPLETED;
@@ -221,8 +217,11 @@ class Pacman extends GameActors {
       this.gameMap.layoutMap.points[indexOfEnerzier] = EMPTY_DOT_EATEN_VALUE;
       this.energizerEaten++;
       this.gameMap.enerzierRemaining--;
+      this.audioLoader.play('eatpill');
 
-      this.score += ENERGIZER_EATEN_SCORE; //each dot worth 100 points
+
+      // this.score += ENERGIZER_EATEN_SCORE; //each dot worth 100 points
+      this.addScore(ENERGIZER_EATEN_SCORE);
 
       //set pacman frightened speed
       this.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'FRIGHT');
@@ -231,12 +230,21 @@ class Pacman extends GameActors {
       for (let i = 0; i < this.ghosts.length; i++) {
 
         //if ghost is returing home don't set it to frightened mode
-        if (!this.ghosts[i].returnHome) {
+        if (!this.ghosts[i].returnHome && !this.ghosts[i].deadForABit) {
           this.ghosts[i].frightened = true;
           this.ghosts[i].flashCount = 0;
           this.ghosts[i].delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'FRIGHT');
         }
       }
+    }
+  }
+
+  addScore(nScore) {
+    this.score += nScore;
+    // add extra life after getting 10,000 points
+    if (this.score >= 10000 && this.score - nScore < 10000) {
+      this.lives += 1;
+      this.audioLoader.play('extralives');
     }
   }
 
@@ -293,12 +301,5 @@ class Pacman extends GameActors {
   removeEventListeners() {
     window.removeEventListener('keydown', this.keyDownHandler, false);
     window.removeEventListener('keyup', this.keyUpHandler, false);
-  }
-
-  addScore(nScore) {
-    score += nScore;
-    if (score >= 10000 && score - nScore < 10000) {
-      lives += 1;
-    }
   }
 }

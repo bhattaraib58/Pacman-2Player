@@ -9,6 +9,35 @@ if (!window.requestAnimationFrame) {
     };
 }
 
+// sometimes getting issue, this is the original array index of working but 
+// as if browser don't have index of we will provide our own implementation
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (elt /*, from*/) {
+    var len = this.length;
+    var from = Number(arguments[1]) || 0;
+    from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+    if (from < 0) {
+      from += len;
+    }
+    for (; from < len; ++from) {
+      if (from in this && this[from] === elt) {
+        return from;
+      }
+    }
+    return -1;
+  };
+}
+
+if (!Array.prototype.remove) {
+  Array.prototype.remove = function (from, to) {
+    var rest = this.slice((to || from) + 1 || this.length);
+    this.length = from < 0 ? this.length + from : from;
+    return this.push.apply(this, rest);
+  };
+}
+
+
+
 /* Make sure everything fits nicely in the window, and redraws on screen resize events. */
 function resize(event) {
   display.canvas.width = window.innerWidth || document.documentElement.clientWidth;
@@ -87,7 +116,6 @@ function getCharacterSpeed(characterName, gameLevel, gameMode) {
   if (gameLevel >= 5 && gameLevel <= 20) { gameLevel = 5; }
   if (gameLevel >= 21) { gameLevel = 21; }
 
-  let characterSpeedPercentage = CHARACTERS_SPEED[characterName][gameLevel][gameMode];
-  let speed = PACMAN_MAX_SPEED + ((300 - characterSpeedPercentage * 3) / 100) * PACMAN_MAX_SPEED;
+  let speed = CHARACTERS_SPEED[characterName][gameLevel][gameMode];
   return speed;
 }

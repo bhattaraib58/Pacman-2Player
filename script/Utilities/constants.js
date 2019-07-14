@@ -44,14 +44,29 @@ const GAME_MODE = {
 const GHOST_POSITION = {
   BLINKY: {
     INITIAL_POSITION: [13, 11],
-    SCATTER_HOME_POSITION: [1, 1]
+    SCATTER_HOME_POSITION: [26, 1],
+    DEAD_MODE_POSITION:[14,13],
+    DEAD_MODE_TIME: 0
   },
   PINKY: {
-    INITIAL_POSITION: [15, 11],
-    SCATTER_HOME_POSITION: [1, 1]
+    INITIAL_POSITION: [13, 14],
+    SCATTER_HOME_POSITION: [1, 1],
+    DEAD_MODE_POSITION:[14, 13],
+    DEAD_MODE_TIME: 100
+  },
+  INKY: {
+    INITIAL_POSITION: [15, 14],
+    SCATTER_HOME_POSITION: [26, 29],
+    DEAD_MODE_POSITION:[16, 13],
+    DEAD_MODE_TIME: 200
+  },
+  CLYDE: {
+    INITIAL_POSITION: [11, 14],
+    SCATTER_HOME_POSITION: [1, 29],
+    DEAD_MODE_POSITION:[12, 13],
+    DEAD_MODE_TIME: 300
   },
 };
-
 
 
 //game scores and values
@@ -60,56 +75,72 @@ const ENERGIZER_EATEN_SCORE = 100;
 const GHOST_EATEN_SCORE = 200; //per ghost, if eaten on sucession score =*2
 
 const MAZE_EMPTY_SPACE_VALUE = 13;
+const MAZE_GHOST_ENTRANCE_VALUE = 34;
 const EMPTY_DOT_EATEN_VALUE = 36;
+
+// as our original map has different value for wall and open space, we give new ones here for graph
+const GRAPH_NODE_TYPE = { OPEN: 0, WALL: 1 };
+
 const DOT_VALUE = 37;
 const ENERZIER_VALUE = 38;
+const MAX_DOT_IN_GAME = 242;
+const MAX_ENERZIER_IN_GAME = 4;
 
 //game values
 const PACMAN_MAX_LIVES = 5;
 const PACMAN_INITIAL_LIVES = 2;
 const INITIAL_LEVEL = 1;
 
+//ghost modes
+const GHOST_EATEN_SCORE_TIME = 20;
+const DEAD_MODE_TIME = 100;
+const GHOST_MODE_TIME = 400;
+const NO_OF_FRAMES_FOR_FLASHING = 15;
+const CHASE_MODE_TIME = 2000;
+const SCATTER_MODE_TIME = 400;
+
 //maximum full speed of pacman, 
 //ghost and pacman use this value to set their speed based on game level and game mode
-const PACMAN_MAX_SPEED = 65;
+const PACMAN_MAX_SPEED = 40;
 
 const CHARACTERS_SPEED = {
   //character:{game level:{game mode:speed percentage which later will be taken relative to pacman max speed}}
   PACMAN: {
     1: {
       NORMAL: 80, //when scatter/chase mode
-      FRIGHT: 90 //when frightened mode
+      FRIGHT: 60 //when frightened mode
     },
     2: {
-      NORMAL: 90, //when scatter/chase mode
-      FRIGHT: 95 //when frightened mode
+      NORMAL: 70, //when scatter/chase mode
+      FRIGHT: 65 //when frightened mode
     },
     5: {
-      NORMAL: 100, //when scatter/chase mode
-      FRIGHT: 100 //when frightened mode
+      NORMAL: 60, //when scatter/chase mode
+      FRIGHT: 60 //when frightened mode
     },
     21: {
-      NORMAL: 90, //when scatter/chase mode
-      FRIGHT: 100 //when frightened mode
+      NORMAL: 70, //when scatter/chase mode
+      FRIGHT: 60 //when frightened mode
     }
   },
   GHOST: {
     1: {
-      NORMAL: 75, //when scatter/chase mode
-      FRIGHT: 50 //when frightened mode
+      NORMAL: 100, //when scatter/chase mode
+      FRIGHT: 150 //when frightened mode
     },
     2: {
-      NORMAL: 85, //when scatter/chase mode
-      FRIGHT: 55 //when frightened mode
+      NORMAL: 80, //when scatter/chase mode
+      FRIGHT: 140 //when frightened mode
     },
     5: {
-      NORMAL: 95, //when scatter/chase mode
-      FRIGHT: 60 //when frightened mode
+      NORMAL: 65, //when scatter/chase mode
+      FRIGHT: 130 //when frightened mode
     },
     21: {
-      NORMAL: 95, //when scatter/chase mode
-      FRIGHT: 100 //when frightened mode
-    }
+      NORMAL: 65, //when scatter/chase mode
+      FRIGHT: 60 //when frightened mode
+    },
+    DEAD:200
   }
 };
 

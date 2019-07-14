@@ -27,6 +27,7 @@ class GameActors {
     this.tileFrom = initialPosition.slice(0);
     //always slice tileTo such that the tilefrom and tile to represent diffrent array locations 
     this.tileTo = initialPosition.slice(0);
+    this.previousTile=[0,0];
 
     // the time in millisecond at which character began to move
     this.timeMoved = 0;
@@ -165,6 +166,7 @@ class GameActors {
    * @memberof GameActors
    */
   placeAt(x, y) {
+    this.previousTile=this.tileFrom.slice(0);
     this.tileFrom = [x, y];
     this.tileTo = [x, y];
     this.position =

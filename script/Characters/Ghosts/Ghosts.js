@@ -20,13 +20,13 @@ class Ghosts extends GameActors {
   constructor(ctx,
     gameObject,
     gameMap,
-    initialPosition,
-    ghostScatterHomePosition,
+    audioLoader,
+    ghostPosition,
     ghostSpritePositionObject) {
-    super(ctx, gameObject, gameMap, initialPosition);
+    super(ctx, gameObject, gameMap, ghostPosition.INITIAL_POSITION);
 
-    this.initialPosition = initialPosition;
-    this.ghostScatterHomePosition = ghostScatterHomePosition;
+    this.audioLoader = audioLoader;
+    this.ghostPosition = JSON.parse(JSON.stringify(ghostPosition));
     this.ghostSpritePositionObject = ghostSpritePositionObject;
 
     //currently following pacman
@@ -34,7 +34,7 @@ class Ghosts extends GameActors {
 
     this.previousMovingDirection = MOVING_DIRECTION.STOP;
 
-    this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'normal');
+    this.delayMove = CHARACTERS_SPEED.GHOST.DEAD;
 
     this.chase = true;//true if the ghost is in chase mode false if in scatter mode
     this.frightened = false;//true if the ghost is in frightened mode
@@ -45,7 +45,7 @@ class Ghosts extends GameActors {
 
     //after the ghost returns home it can't leave home for a bit
     //blinky can leave imediately but others take time
-    this.deadForABit = false;
+    this.deadForABit = true;
     this.deadCount = 0;
 
     //this flag is used for hiding the ctx draw of ghost when pacman hits them
@@ -70,7 +70,8 @@ class Ghosts extends GameActors {
         this.moveGhostBasedOnGameMode();
 
         //move pacman based on direction set or continuing moving on direction set
-        super.moveActor();
+        if (this.frightened || this.deadForABit)
+          super.moveActor();
 
         // after setting the values for key press event we set the 
         // time moved (timeMoved= time we started moving the pacman) to current time 
@@ -100,8 +101,8 @@ class Ghosts extends GameActors {
       this.writeGhostEatenScore(this.gameObject.getScoreForGhostKilled());
       this.hideImageCounter++;
 
-      // show image after 30 frames have passed
-      if (this.hideImageCounter >= 30) {
+      // show image after 20 frames have passed
+      if (this.hideImageCounter >= GHOST_EATEN_SCORE_TIME) {
         this.hideDrawImage = false;
         this.pacman.hideDrawImage = false;
         this.gameObject.gamePauseState = false;
@@ -130,11 +131,15 @@ class Ghosts extends GameActors {
 
     //if dead mode don't move
     if (this.deadForABit) {
+      this.delayMove = CHARACTERS_SPEED.GHOST.DEAD;
       this.deadCount++;
+
       // if ghost has been dead for more  than 300 time then start moving ghost out of ghost home
-      if (this.deadCount > 20) {
+      if (this.deadCount >= this.ghostPosition.DEAD_MODE_TIME) {
         this.deadForABit = false;
         this.deadCount = 0;
+        // set speed to normal
+        this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'NORMAL');
       }
     }
     //move pacman
@@ -146,7 +151,7 @@ class Ghosts extends GameActors {
 
         super.setSpritePosition(GHOST_SPRITE_POSITION.FRIGHTENED_MODE_BLUE);
 
-        if (this.flashCount > 800) {//after 8 seconds the ghosts are no longer frightened
+        if (this.flashCount > GHOST_MODE_TIME) {//after 8 seconds the ghosts are no longer frightened
           this.frightened = false;
           this.flashCount = 0;
           this.frightenedModeEndingReminderCounter = 0;
@@ -159,18 +164,20 @@ class Ghosts extends GameActors {
           this.pacman.delayMove = getCharacterSpeed('pacman', this.gameObject.gameLevel, 'NORMAL');
         }
         // make it flash white and blue such that it reminds the frightened timer is going to stop
-        if (this.flashCount < 800 && this.flashCount > 600) {
+        if (this.flashCount < GHOST_MODE_TIME &&
+          this.flashCount > (GHOST_MODE_TIME - (GHOST_MODE_TIME * 30 / 100)) //30% of flash time
+        ) {
           this.frightenedModeEndingReminderCounter++;
 
           // as blue ghost is already set in up we don't need to set blue ghost
           //display white ghost for 15 frame
-          if (this.frightenedModeEndingReminderCounter >= 15 &&
-            this.frightenedModeEndingReminderCounter < 30) {//flash white
+          if (this.frightenedModeEndingReminderCounter >= NO_OF_FRAMES_FOR_FLASHING &&
+            this.frightenedModeEndingReminderCounter < NO_OF_FRAMES_FOR_FLASHING * 2) {//flash white
             super.setSpritePosition(GHOST_SPRITE_POSITION.FRIGHTENED_MODE_WHITE);
           }
 
           //reset counter
-          if (this.frightenedModeEndingReminderCounter >= 30) {
+          if (this.frightenedModeEndingReminderCounter >= NO_OF_FRAMES_FOR_FLASHING * 2) {
             this.frightenedModeEndingReminderCounter = 0;
           }
         }
@@ -189,7 +196,7 @@ class Ghosts extends GameActors {
           // check if on chase mode or on scatter mode
           if (this.chase) {
             // if the chasing time is greater than 2000 timer move to scatter mode
-            if (this.chaseCount > 2000) {
+            if (this.chaseCount > CHASE_MODE_TIME) {
               //set chase mode sprites
               super.setSpritePosition(this.ghostSpritePositionObject);
 
@@ -198,7 +205,7 @@ class Ghosts extends GameActors {
             }
           } else {
             // if on scatter mode for mode than 700 timer move to chase mode
-            if (this.chaseCount > 700) {
+            if (this.chaseCount > SCATTER_MODE_TIME) {
               this.chase = true;
               this.chaseCount = 0;
             }
@@ -224,7 +231,22 @@ class Ghosts extends GameActors {
       }
       this.checkGhostEatenOrPacmanEaten();//check if need to change direction next move
     }
+    if (this.deadForABit) {
+      //refers to ghost moving up and down in ghost home
+      this.moveInDeadModeInsideGhostHome();
+    }
   }
+
+  moveInDeadModeInsideGhostHome() {
+    if (super.isBlockUpperThanActorEmpty()) {
+      super.setMovingUpActorData();
+    }
+
+    if (super.isBlockLowerThanActorEmpty()) {
+      super.setMovingDownActorData();
+    }
+  }
+
 
   /**
    * Check based on game mode (Chase mode or Frightened),
@@ -236,6 +258,7 @@ class Ghosts extends GameActors {
     if (this.pacman.hitPacman(this.position)) {//if hit pacman
       if (this.frightened) {//eaten by pacman
 
+        this.audioLoader.play('eatghost');
         this.gameObject.setGhostKilledMultiplier();
         this.gameObject.gamePauseState = true;
         this.hideDrawImage = true;
@@ -253,13 +276,12 @@ class Ghosts extends GameActors {
     // if eaten by pacman we have to move to home for respawn
     // check if reached home yet
     if (this.returnHome) {
-
       //check if home reached
       if (
-        (this.initialPosition[0] * this.gameMap.layoutMap.tileWidth) < this.position[0] + this.dimensions[0] - 5 &&
-        (this.initialPosition[0] * this.gameMap.layoutMap.tileWidth) + this.dimensions[0] - 5 > this.position[0] &&
-        (this.initialPosition[1] * this.gameMap.layoutMap.tileHeight) < this.position[1] + this.dimensions[1] &&
-        (this.initialPosition[1] * this.gameMap.layoutMap.tileHeight) + this.dimensions[1] + HEADER_HEIGHT > this.position[1]) {
+        (this.ghostPosition.DEAD_MODE_POSITION[0] * this.gameMap.layoutMap.tileWidth) < this.position[0] + this.gameMap.layoutMap.tileWidth &&
+        (this.ghostPosition.DEAD_MODE_POSITION[0] * this.gameMap.layoutMap.tileWidth) + this.gameMap.layoutMap.tileWidth > this.position[0] &&
+        (this.ghostPosition.DEAD_MODE_POSITION[1] * this.gameMap.layoutMap.tileHeight) < this.position[1] + this.gameMap.layoutMap.tileHeight &&
+        (this.ghostPosition.DEAD_MODE_POSITION[1] * this.gameMap.layoutMap.tileHeight) + this.gameMap.layoutMap.tileHeight + HEADER_HEIGHT > this.position[1]) {
 
         //set the ghost as dead for a bit
         this.returnHome = false;
@@ -268,9 +290,6 @@ class Ghosts extends GameActors {
 
         //set real image position of - blinky, clyde, pinky
         super.setSpritePosition(this.ghostSpritePositionObject);
-
-        // set speed to normal
-        this.delayMove = getCharacterSpeed('GHOST', this.gameObject.gameLevel, 'NORMAL');
       }
     }
   }
@@ -333,15 +352,53 @@ class Ghosts extends GameActors {
    */
   getTargetToFollow() {
     if (this.returnHome) {//if returning home then the target is just above the ghost room or inside ghost box
-      return this.initialPosition;
+      return this.ghostPosition.DEAD_MODE_POSITION;
     } else {
       // if on chase mode target pacman
       if (this.chase) {
         return this.getPacmanTargetPosition();
       } else {//if on scatter mode target respective corner
-        return this.ghostScatterHomePosition; //scatter to corner
+        //if ghost has been to home position the start moving towards pacman as 
+        // ghost can be in same position for some time
+        if (
+          (this.tileFrom[0] - this.ghostPosition.SCATTER_HOME_POSITION[0]) < 5 &&
+          (this.tileFrom[1] - this.ghostPosition.SCATTER_HOME_POSITION[1]) < 5) {
+          return this.getPacmanTargetPosition();
+        }
+        return this.ghostPosition.SCATTER_HOME_POSITION; //scatter to corner
       }
     }
+  }
+
+
+
+  /**
+   * As our taregt may have positions out of map like in tunnelling process or others
+   * we have to normalize the position so we dont get error on Targeting
+   *
+   * @param {*} position
+   * @returns
+   * @memberof Ghosts
+   */
+  normalizePosition(position) {
+    position = position.slice(0);
+
+    // used to work as tunnel if left and right are empty pacman/ghosts can easily move in tunnel
+    if (position[0] < 0) {
+      position[0] = this.gameMap.layoutMap.column;
+    }
+    if (position[0] >= this.gameMap.layoutMap.column) {
+      position[0] = 0;
+    }
+
+    // used to work as tunnel if top and bottom are empty pacman/ghosts can easily move in tunnel
+    if (position[1] < 0) {
+      position[1] = this.gameMap.layoutMap.row;
+    }
+    if (position[1] >= this.gameMap.layoutMap.row) {
+      position[1] = 0;
+    }
+    return position;
   }
 
   /**
@@ -391,183 +448,45 @@ class Ghosts extends GameActors {
     //previous moving direction of ghost
     this.previousMovingDirection = this.movingDirection;
 
-    //get which point to follow
-    let getTargetToFollow = this.getTargetToFollow();
-
-    let differenceInXAxis = this.tileFrom[0] - getTargetToFollow[0];
-    let differenceInYAxis = this.tileFrom[1] - getTargetToFollow[1];
-
     //if there are 2 or more than 2 direction to move then only move ghost otherwise keep ghost going in same direction
-    if (this.checkJunction() >= 2) {
+    if (this.checkJunction() >= 2 || this.returnHome) {
 
-      // if difference between y-axis is lower than x-axis favour, y-axis  
-      if (differenceInYAxis < differenceInXAxis) {
-        if (differenceInYAxis > 0) {
-          if (this.isBlockUpperThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.DOWN) {
-            this.setMovingUpActorData();
-          }
-          else if (differenceInXAxis >= 0) {
-            if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-              this.setMovingLeftActorData();
-            }
-            else if (this.isBlockRightThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-              this.setMovingRightActorData();
-            }
-          }
-          else if (differenceInXAxis < 0) {
-            if (this.setMovingRightActorData() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-              this.setMovingRightActorData();
-            }
-            else if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-              this.setMovingLeftActorData();
-            }
-          }
-          else {
-            this.setMovingDownActorData();
-          }
+      //get which point to follow
+      let getTarget = this.getTargetToFollow();
+      getTarget = this.normalizePosition(getTarget);
+      let ghostCurrentTile = this.normalizePosition(this.tileFrom);
+      let ghostPreviousTile = this.normalizePosition(this.previousTile);
+
+      let path = this.gameMap.findMapPath(ghostPreviousTile, ghostCurrentTile, getTarget);
+      //check if there is any map to goto given by A star algo
+
+      if (path[0]) {
+        //as our tile 0 represent x(column) in game 
+        // and y represent (column) in map so we have to reverse it
+        this.tileTo[0] = path[0].y;
+        this.tileTo[1] = path[0].x;
+
+        if (this.tileTo[1] < this.tileFrom[1]) {
+          super.setMovingUpActorData();
         }
-        else if (differenceInYAxis < 0) {
-          if (this.isBlockLowerThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.UP) {
-            this.setMovingDownActorData();
-          }
-          else if (differenceInXAxis >= 0) {
-            if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-              this.setMovingLeftActorData();
-            }
-            else if (this.isBlockRightThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-              this.setMovingRightActorData();
-            }
-          }
-          else if (differenceInXAxis < 0) {
-            if (this.setMovingRightActorData() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-              this.setMovingRightActorData();
-            }
-            else if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-              this.setMovingLeftActorData();
-            }
-          }
-          else {
-            this.setMovingUpActorData();
-          }
+        else if (this.tileTo[1] > this.tileFrom[1]) {
+          super.setMovingDownActorData();
         }
-        //y==0
-        else {
-          if (differenceInXAxis > 0 && this.isBlockLeftThanActorEmpty()) {
-            this.setMovingLeftActorData();
-          }
-          else if (differenceInXAxis < 0 && this.isBlockRightThanActorEmpty()) {
-            this.setMovingRightActorData();
-          }
-          else if (this.isBlockLowerThanActorEmpty()) {
-            this.setMovingDownActorData();
-          }
-          else if (this.isBlockUpperThanActorEmpty()) {
-            this.setMovingUpActorData();
-          }
+        else if (this.tileTo[0] > this.tileFrom[0]) {
+          super.setMovingRightActorData();
+        }
+        else if (this.tileTo[0] < this.tileFrom[0]) {
+          super.setMovingLeftActorData();
         }
       }
-
-      else if (differenceInXAxis < differenceInYAxis) {
-        if (differenceInXAxis < 0) {
-          if (this.isBlockRightThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-            this.setMovingRightActorData();
-          }
-          else if (differenceInYAxis >= 0) {
-            if (this.isBlockUpperThanActorEmpty()) {
-              this.setMovingUpActorData();
-            }
-            else if (this.isBlockLowerThanActorEmpty()) {
-              this.setMovingDownActorData();
-            }
-          }
-          else if (differenceInYAxis < 0) {
-            if (this.isBlockLowerThanActorEmpty()) {
-              this.setMovingDownActorData();
-            }
-            else if (this.isBlockUpperThanActorEmpty()) {
-              this.setMovingUpActorData();
-            }
-          }
-          else {
-            this.setMovingLeftActorData();
-          }
-        }
-
-        else if (differenceInXAxis > 0) {
-          if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-            this.setMovingLeftActorData();
-          }
-          else if (differenceInYAxis >= 0) {
-            if (this.isBlockUpperThanActorEmpty()) {
-              this.setMovingUpActorData();
-            }
-            else if (this.isBlockLowerThanActorEmpty()) {
-              this.setMovingDownActorData();
-            }
-          }
-          else if (differenceInYAxis < 0) {
-            if (this.isBlockLowerThanActorEmpty()) {
-              this.setMovingDownActorData();
-            }
-            else if (this.isBlockUpperThanActorEmpty()) {
-              this.setMovingUpActorData();
-            }
-          }
-          else {
-            this.setMovingRightActorData();
-          }
-        }
-
-        else {
-          if (differenceInYAxis > 0 && this.isBlockUpperThanActorEmpty()) {
-            this.setMovingUpActorData();
-          }
-          else if (differenceInYAxis < 0 && this.isBlockLowerThanActorEmpty()) {
-            this.setMovingDownActorData();
-          }
-          else if (this.isBlockRightThanActorEmpty()) {
-            this.setMovingRightActorData();
-          }
-          else if (this.isBlockLeftThanActorEmpty()) {
-            this.setMovingLeftActorData();
-          }
-        }
+      //if there is no path to follow, no result by astar goto normal flow of mocing direction
+      if (path.length < 1) {
+        super.moveActor();
       }
-
-      else {
-        if (differenceInXAxis > 0) {
-          if (this.isBlockLeftThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.LEFT) {
-            this.setMovingLeftActorData();
-          }
-          else if (this.isBlockRightThanActorEmpty()) {
-            this.setMovingRightActorData();
-          }
-        }
-        else if (differenceInXAxis < 0) {
-          if (this.setMovingRightActorData() && this.previousMovingDirection != MOVING_DIRECTION.RIGHT) {
-            this.setMovingRightActorData();
-          }
-          else {
-            this.setMovingLeftActorData();
-          }
-        }
-        else if (differenceInYAxis >= 0) {
-          if (this.isBlockUpperThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.DOWN) {
-            this.setMovingUpActorData();
-          }
-          else {
-            this.setMovingDownActorData();
-          }
-        }
-        else if (differenceInYAxis < 0) {
-          if (this.isBlockLowerThanActorEmpty() && this.previousMovingDirection != MOVING_DIRECTION.UP) {
-            this.setMovingDownActorData();
-          }
-          else {
-            this.setMovingDownActorData();
-          }
-        }
-      }
+    }
+    //if it is not junction keep moving in direction of travel
+    else {
+      super.moveActor();
     }
   }
 }

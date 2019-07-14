@@ -15,14 +15,57 @@ class GameMap {
     this.mapImage = new Image();
     this.mapImage.src = this.layoutMap.image;
 
-    this.dotsRemaining = 242;
-    this.enerzierRemaining = 4;
+    this.dotsRemaining = MAX_DOT_IN_GAME;
+    this.enerzierRemaining = MAX_ENERZIER_IN_GAME;
 
     //for enerzier
     this.spriteAnimation = new Sprite(GAME_SYMBOLS.ENERGIZER.X,
       GAME_SYMBOLS.ENERGIZER.DELAY_SPEED,
       PACMAN_TILES,
       GAME_SYMBOLS.ENERGIZER.Y);
+
+    this.createLayoutMapGraph(this.layoutMap);
+  }
+
+  /**
+   * Creates Layout map graph to be used, to be called only once in creation of game map object
+   * high memory task
+   *
+   * @param {*} layoutMap
+   * @memberof GameMap
+   */
+  createLayoutMapGraph(layoutMap) {
+    this.graph = new Graph();
+    let array = this.graph.create1DTo2DArray(layoutMap.map, layoutMap.row, layoutMap.column);
+    this.graph.createGraph(array);
+  }
+
+
+  /**
+   *
+   *
+   * @param {*} startNode
+   * @param {*} endNode
+   * @memberof GameMap
+   */
+  findMapPath(previousNode, startNode, endNode) {
+    // this.createLayoutMapGraph(this.layoutMap);
+    // as the nodes may have different place as its graph now so we should compute once again for fail safe
+    //as our tile 0 represent x(column) in game 
+    // and y represent (column) in map so we have to reverse it
+
+    // as we dont want pacman to goto previous direction we set previous to already visited
+    let prev = {
+      x: previousNode[1],
+      y: previousNode[0],
+      closed: true,
+      visited: true
+    };
+
+    let start = this.graph.nodes[startNode[1]][startNode[0]];
+    let end = this.graph.nodes[endNode[1]][endNode[0]];
+    let result = Astar.search(this.graph.nodes, prev, start, end);
+    return result;
   }
 
   /**
@@ -44,11 +87,15 @@ class GameMap {
       /* We get the value of each tile in the map which corresponds to the tile
       graphic index in the tileSheet.image. */
       let value = this.layoutMap.map[index];
+      let pointsValue = this.layoutMap.points[index];
 
       /* This is the x and y location at which to cut the tile image out of the
       tileSheet.image. */
       let sourceX = (value % this.layoutMap.tileWidth) * this.layoutMap.tileWidth;
       let sourceY = Math.floor(value / this.layoutMap.tileHeight) * this.layoutMap.tileHeight;
+
+      let pointSourceX = (pointsValue % this.layoutMap.tileWidth) * this.layoutMap.tileWidth;
+      let pointSourceY = Math.floor(pointsValue / this.layoutMap.tileHeight) * this.layoutMap.tileHeight;
 
       /* This is the x and y location at which to draw the tile image we are cutting
       from the layoutMap.layoutImage to the ctx canvas. */
@@ -61,23 +108,16 @@ class GameMap {
         sourceY,
         this.layoutMap.tileWidth,
         this.layoutMap.tileHeight,
-        Math.floor(destinationX),
-        Math.floor(destinationY) + HEADER_HEIGHT,
+        destinationX,
+        destinationY + HEADER_HEIGHT,
         this.layoutMap.tileWidth,
         this.layoutMap.tileHeight);
-    }
 
-    /* Looping through the tile map. */
-    for (let index = this.layoutMap.points.length - 1; index > -1; --index) {
-      let value = this.layoutMap.points[index];
-      let sourceX = (value % this.layoutMap.tileWidth) * this.layoutMap.tileWidth;
-      let sourceY = Math.floor(value / this.layoutMap.tileHeight) * this.layoutMap.tileHeight;
-      let destinationX = (index % this.layoutMap.column) * this.layoutMap.tileWidth;
-      let destinationY = Math.floor(index / this.layoutMap.column) * this.layoutMap.tileHeight;
-      if (value !== 38) {
+      // if point is not enerzier we set the value as dot or empty based on value
+      if (pointsValue !== ENERZIER_VALUE) {
         this.ctx.drawImage(this.mapImage,
-          sourceX,
-          sourceY,
+          pointSourceX,
+          pointSourceY,
           this.layoutMap.tileWidth,
           this.layoutMap.tileHeight,
           destinationX,
@@ -85,7 +125,7 @@ class GameMap {
           this.layoutMap.tileWidth,
           this.layoutMap.tileHeight);
       }
-      if (value === 38) {
+      if (pointsValue === ENERZIER_VALUE) {
         this.ctx.drawImage(this.spriteAnimation.image,
           this.spriteAnimation.spriteXPosition * this.layoutMap.tileWidth,
           this.spriteAnimation.spriteYPosition * this.layoutMap.tileHeight,
