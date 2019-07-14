@@ -23,6 +23,8 @@ const MOVING_DIRECTION = {
   STOP: "STOP"
 };
 
+const GAME_ANIMATION_SPEED_FPS = 120;
+
 //Game States
 const GAME_STATE = {
   MENU: 100,

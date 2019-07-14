@@ -9,7 +9,7 @@ class GameWorld {
    * @param {*} canvasElement
    * @memberof GameWorld
    */
-  constructor(canvasElement) {
+  constructor(canvasElement, fps) {
     this.canvasElement = canvasElement;
     this.canvasElement.width = CANVAS_WIDTH;
     this.canvasElement.height = CANVAS_HEIGHT;
@@ -23,6 +23,11 @@ class GameWorld {
     this.singlePlayerGame = null;
     this.playerVsPlayerGame = null;
     this.audioLoader = null;
+
+
+    fps = fps || GAME_ANIMATION_SPEED_FPS;
+    this.start = 0;
+    this.frameDuration = 1000 / fps;
 
     this.gameEngine = 0;  //request animation frame value needed for stopping game
   }
@@ -38,19 +43,24 @@ class GameWorld {
     });
   }
 
-  runEngine() {
-    switch (this.gameState) {
-      case GAME_STATE.MENU:
-        this.gameMenu.draw();
-        break;
+  runEngine(timestamp) {
+    // for limiting fps
+    if (timestamp >= this.start) {
+      switch (this.gameState) {
+        case GAME_STATE.MENU:
+          this.gameMenu.draw();
+          break;
 
-      case GAME_STATE.SINGLE_PLAYER:
-        this.singlePlayerGame.draw();
-        break;
+        case GAME_STATE.SINGLE_PLAYER:
+          this.singlePlayerGame.draw();
+          break;
 
-      case GAME_STATE.PLAYER_VS_PLAYER:
-        this.playerVsPlayerGame.draw();
-        break;
+        case GAME_STATE.PLAYER_VS_PLAYER:
+          this.playerVsPlayerGame.draw();
+          break;
+      }
+      //for fps limitation
+      this.start = timestamp + this.frameDuration;
     }
     this.gameEngine = window.requestAnimationFrame(this.runEngine.bind(this));
   }
