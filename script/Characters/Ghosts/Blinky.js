@@ -23,5 +23,6 @@ class Blinky extends Ghosts {
       this.dimensions[0],
       this.dimensions[1]
     );
+    this.setInitialPosition(this.initialPosition);
   }
 }

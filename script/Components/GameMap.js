@@ -15,8 +15,8 @@ class GameMap {
     this.mapImage = new Image();
     this.mapImage.src = this.layoutMap.image;
 
-    this.dotsRemaining = MAX_DOT_IN_GAME;
-    this.enerzierRemaining = MAX_ENERZIER_IN_GAME;
+    this.dotsRemaining = layoutMap.totaldots;
+    this.enerzierRemaining = layoutMap.totalEnerzier;
 
     //for enerzier
     this.spriteAnimation = new Sprite(GAME_SYMBOLS.ENERGIZER.X,

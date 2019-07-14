@@ -21,6 +21,7 @@ class GameWorld {
     this.gameState = GAME_STATE.MENU;
     this.gameMenu = null;
     this.singlePlayerGame = null;
+    this.playerVsPlayerGame = null;
     this.audioLoader = null;
 
     this.gameEngine = 0;  //request animation frame value needed for stopping game
@@ -48,18 +49,7 @@ class GameWorld {
         break;
 
       case GAME_STATE.PLAYER_VS_PLAYER:
-          this.singlePlayerGame.draw();
-        console.log('p2p');
-        break;
-
-      case GAME_STATE.TWO_PLAYER_MODE:
-          this.singlePlayerGame.draw();
-        console.log('2p');
-        break;
-
-      case GAME_STATE.HIGH_SCORE_DISPLAY:
-          this.singlePlayerGame.draw();
-        console.log('hs');
+        this.playerVsPlayerGame.draw();
         break;
     }
     this.gameEngine = window.requestAnimationFrame(this.runEngine.bind(this));
@@ -67,6 +57,7 @@ class GameWorld {
 
   resetGameComponents() {
     this.gameMenu = new GameMenu(this.ctx, this);
-    this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this, this.audioLoader, LAYOUT_MAP_ORIGINAL);
+    this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this, this.audioLoader, SINGLE_PLAYER_MODE);
+    this.playerVsPlayerGame = new Game(this.canvasElement, this.ctx, this, this.audioLoader, PLAYER_VS_PLAYER_MODE);
   }
 }

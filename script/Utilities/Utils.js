@@ -13,8 +13,8 @@ if (!window.requestAnimationFrame) {
 // as if browser don't have index of we will provide our own implementation
 if (!Array.prototype.indexOf) {
   Array.prototype.indexOf = function (elt /*, from*/) {
-    var len = this.length;
-    var from = Number(arguments[1]) || 0;
+    let len = this.length;
+    let from = Number(arguments[1]) || 0;
     from = (from < 0) ? Math.ceil(from) : Math.floor(from);
     if (from < 0) {
       from += len;
@@ -30,7 +30,7 @@ if (!Array.prototype.indexOf) {
 
 if (!Array.prototype.remove) {
   Array.prototype.remove = function (from, to) {
-    var rest = this.slice((to || from) + 1 || this.length);
+    let rest = this.slice((to || from) + 1 || this.length);
     this.length = from < 0 ? this.length + from : from;
     return this.push.apply(this, rest);
   };
@@ -119,3 +119,32 @@ function getCharacterSpeed(characterName, gameLevel, gameMode) {
   let speed = CHARACTERS_SPEED[characterName][gameLevel][gameMode];
   return speed;
 }
+
+
+// 2PHighScore,1PHighScore
+//for storing and retrieving from localStorage
+let DataStorage = {
+  getItem(itemName) {
+    let item = localStorage.getItem(itemName);
+    return item;
+  },
+
+  getLength() {
+    let length = localStorage.length;
+
+    return length;
+  },
+
+  getItemName(keyValue) {
+    let name = localStorage.key(keyValue);
+    return name;
+  },
+
+  setItem(itemName, itemData) {
+    localStorage.setItem(itemName, JSON.stringify(itemData));
+  },
+
+  clear() {
+    localStorage.clear();
+  }
+};

@@ -1,13 +1,21 @@
 class Game {
-  constructor(canvas, ctx, gameWorldObject, audioLoader, layoutMap) {
+  constructor(canvas, ctx, gameWorldObject, audioLoader, gameData) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.gameWorldObject = gameWorldObject;
     this.audioLoader = audioLoader;
 
-    this.layoutMap = JSON.parse(JSON.stringify(layoutMap));
-    this.gameLevel = INITIAL_LEVEL;
+    this.gamedata = JSON.parse(JSON.stringify(gameData));
+    this.gameLevel = gameData.initialLevel;
+    this.layoutMap = gameData.layoutMap;
     this.gameMode = GAME_MODE.GAME_START;
+    this.highScore = 0;
+    this.highestScore = 0;
+    this.highScorerName = 0;
+
+    // pacman object
+    this.players = [];
+    this.ghosts = null;
 
     //game pause state refers to when pacman dead or ghost dead, game end etc
     this.gamePauseState = false;
@@ -20,16 +28,6 @@ class Game {
     //gamamap object
     this.gameMap = null;
 
-    // pacman object
-    this.pacman1 = null;
-    this.pacman2 = null;
-
-    //game ghosts
-    this.blinky = null;
-    this.pinky = null;
-    this.inky = null;
-    this.clyde = null;
-
     // currently which time we are on
     this.currentSecond = 0;
     // how much frame is currently displayed
@@ -41,10 +39,21 @@ class Game {
   }
 
   init() {
-    let initialPosition = [14, 23];
     this.createGameMap();
-    this.pacman1 = new Pacman(this.ctx, this, PLAYER1_CONTROL_KEY, this.gameMap, this.audioLoader, initialPosition);
-    // this.pacman2 = new Pacman(this.ctx, this, PLAYER2_CONTROL_KEY, this.gameMap, initialPosition);
+
+    //initualize pacman class with given data in gamedata
+    for (let [key, playerData] of Object.entries(this.gamedata.player)) {
+      let player = new Pacman(
+        this.ctx,
+        this,
+        playerData.control,
+        this.gameMap,
+        this.audioLoader,
+        playerData.initialPosition);
+
+      //add pacman to array
+      this.players.push(player);
+    }
   }
 
   createGameMap() {
@@ -53,8 +62,6 @@ class Game {
   }
 
   createNewGame() {
-    //all ghosts in game array
-    let ghosts = [];
 
     //game pause state refers to when pacman dead or ghost dead, game end etc
     this.gamePauseState = false;
@@ -64,60 +71,75 @@ class Game {
     this.isNewGameCreated = false;
     this.hasPlayed = false;
 
-    let initialPosition = [14, 23].slice(0);
-    this.pacman1.initPacman(initialPosition);
-    // this.pacman2.initPacman(initialPosition);
+    if (this.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+      this.highScore = DataStorage.getItem('1PHighScore') || 0;
+    }
+    else {
+      this.highScore = DataStorage.getItem('2PHighScore') || 0;
+    }
 
-    this.blinky = new Blinky(this.ctx,
-      this,
-      this.gameMap,
-      this.audioLoader,
-      GHOST_POSITION.BLINKY,
-      GHOST_SPRITE_POSITION.CHASE_MODE.BLINKY
-    );
+    //initialize ghosts with given ghost data in gamedata
+    for (let [playerId, playerData] of Object.entries(this.gamedata.player)) {
+      let ghosts = [];
+      //reinitialize initial position
+      this.players[playerId].initPacman(playerData.initialPosition);
+      this.players[playerId].setGameMap(this.gameMap);
 
-    this.pinky = new Pinky(
-      this.ctx,
-      this,
-      this.gameMap,
-      this.audioLoader,
-      GHOST_POSITION.PINKY,
-      GHOST_SPRITE_POSITION.CHASE_MODE.PINKY
-    );
+      for (let [ghostId, ghostData] of Object.entries(playerData.targetGhosts)) {
+        let ghost;
 
-    this.inky = new Inky(
-      this.ctx,
-      this,
-      this.gameMap,
-      this.audioLoader,
-      GHOST_POSITION.INKY,
-      GHOST_SPRITE_POSITION.CHASE_MODE.INKY
-    );
+        if (ghostData.ghostName == 'BLINKY') {
+          ghost = new Blinky(this.ctx,
+            this,
+            this.gameMap,
+            this.audioLoader,
+            ghostData.ghostPosition,
+            ghostData.ghostSpritePosition
+          );
+        }
 
-    this.clyde = new Clyde(
-      this.ctx,
-      this,
-      this.gameMap,
-      this.audioLoader,
-      GHOST_POSITION.CLYDE,
-      GHOST_SPRITE_POSITION.CHASE_MODE.CLYDE
-    );
+        else if (ghostData.ghostName == 'PINKY') {
+          ghost = new Pinky(
+            this.ctx,
+            this,
+            this.gameMap,
+            this.audioLoader,
+            ghostData.ghostPosition,
+            ghostData.ghostSpritePosition
+          );
+        }
 
-    this.blinky.setCurrenltyFollowingPacman(this.pacman1);
-    this.pinky.setCurrenltyFollowingPacman(this.pacman1);
-    this.inky.setCurrenltyFollowingPacman(this.pacman1);
-    this.clyde.setCurrenltyFollowingPacman(this.pacman1);
+        else if (ghostData.ghostName == 'INKY') {
+          ghost = new Inky(
+            this.ctx,
+            this,
+            this.gameMap,
+            this.audioLoader,
+            ghostData.ghostPosition,
+            ghostData.ghostSpritePosition
+          );
+        }
+        else if (ghostData.ghostName == 'CLYDE') {
+          ghost = new Clyde(
+            this.ctx,
+            this,
+            this.gameMap,
+            this.audioLoader,
+            ghostData.ghostPosition,
+            ghostData.ghostSpritePosition
+          );
+        }
+        else {
+          console.log('Please check you have typed other ghost name or data');
+        }
 
-    ghosts.push(this.blinky);
-    ghosts.push(this.pinky);
-    ghosts.push(this.inky);
-    ghosts.push(this.clyde);
-    this.pacman1.setGhosts(ghosts);
-    // this.pacman2.setGhosts(ghosts);
-
-    this.pacman1.setGameMap(this.gameMap);
+        ghost.setCurrenltyFollowingPacman(this.players[playerId]);
+        ghosts.push(ghost);
+      }
+      //after all data have been saved to array set ghosts
+      this.players[playerId].setGhosts(ghosts);
+    }
   }
-
 
   getScoreForGhostKilled() {
     return GHOST_EATEN_SCORE * this.ghostKilledScoreMultiplier;
@@ -152,16 +174,19 @@ class Game {
 
     switch (this.gameMode) {
       case GAME_MODE.GAME_PLAYING:
-        // this.audioLoader.stop('opening_song');
 
-        //draw pacman
-        this.pacman1.draw();
-        // this.pacman2.draw();
-
-        this.blinky.moveGhosts();
-        this.pinky.moveGhosts();
-        this.inky.moveGhosts();
-        this.clyde.moveGhosts();
+        //move pacman and ghosts
+        for (let i = 0; i < this.players.length; i++) {
+          if (!this.players[i].pacDead) {
+            this.players[i].draw();
+            for (let j = 0; j < this.players[i].ghosts.length; j++) {
+              this.players[i].ghosts[j].moveGhosts();
+            }
+          }
+          else {
+            this.players[i].setDeadPosition();
+          }
+        }
         break;
 
       case GAME_MODE.GAME_START:
@@ -182,10 +207,12 @@ class Game {
           this.hasPlayed = true;
         }
         //draw pacman dead, if animation not completed to show dead pacman start new game
-        if (!this.pacman1.drawPacmanDead()) {
-          this.gameMode = GAME_MODE.GAME_BEGIN;
-          this.isNewGameCreated = false;
-          this.hasPlayed = false;
+        if (this.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+          if (!this.players[0].drawPacmanDead()) {
+            this.gameMode = GAME_MODE.GAME_BEGIN;
+            this.isNewGameCreated = false;
+            this.hasPlayed = false;
+          }
         }
         break;
 
@@ -204,13 +231,22 @@ class Game {
           this.hasPlayed = true;
         }
         //draw pacman dead, if animation not completed to show dead pacman dont show game over
-        if (!this.pacman1.drawPacmanDead()) {
-          this.gameModeCounter++;
-          this.drawGameover();
-          if (this.gameModeCounter > 100) {
-            this.gameWorldObject.gameState = GAME_STATE.MENU;
-            this.hasPlayed = false;
+        if (this.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+          if (!this.players[0].drawPacmanDead()) {
+            this.gameModeCounter++;
+            this.drawGameover();
+            if (this.gameModeCounter > 100) {
+
+              if (this.players[0].score > this.highScore) {
+                DataStorage.setItem('1PHighScore', this.players[0].score);
+              }
+              this.gameWorldObject.gameState = GAME_STATE.MENU;
+              this.hasPlayed = false;
+            }
           }
+        }
+        else {
+          this.drawTwoPlayerPacmanDead();
         }
         break;
     }
@@ -251,12 +287,13 @@ class Game {
 
     this.gameModeCounter++;
 
-    this.blinky.drawInitialSprite();
-    this.pinky.drawInitialSprite();
-    this.inky.drawInitialSprite();
-    this.clyde.drawInitialSprite();
-    this.pacman1.drawInitialSprite();
-    // this.pacman2.drawInitialSprite();
+    //draw pacman and ghost initail sprite
+    for (let i = 0; i < this.players.length; i++) {
+      this.players[i].drawInitialSprite();
+      for (let j = 0; j < this.players[i].ghosts.length; j++) {
+        this.players[i].ghosts[j].drawInitialSprite();
+      }
+    }
 
     writeTextOnCanvasWithSize(this.ctx,
       'READY!',
@@ -282,6 +319,34 @@ class Game {
     );
   }
 
+  drawTwoPlayerPacmanDead() {
+    this.gameModeCounter++;
+    for (let i = 0; i < this.players.length; i++) {
+      this.players[i].drawPacmanDead();
+      if (this.players[i].score > this.highestScore) {
+        this.highestScore = this.players[i].score;
+        this.highScorerName = i;
+      }
+    }
+    if (this.gameModeCounter > 20) {
+      this.drawGameover();
+      writeTextOnCanvasWithSize(this.ctx,
+        'Player ' + this.highScorerName + 1 + ' Wins',
+        14,
+        '#ffff00',
+        (8 * 16),
+        HEADER_HEIGHT + (12 * 16)
+      );
+    }
+    if (this.gameModeCounter > 100) {
+      if (this.highestScore > this.highScore) {
+        DataStorage.setItem('2PHighScore', this.highestScore);
+      }
+      this.gameWorldObject.gameState = GAME_STATE.MENU;
+      this.hasPlayed = false;
+    }
+  }
+
   drawLevelCompleted() {
     this.gameModeCounter++;
     this.gamePauseState = true;
@@ -297,7 +362,10 @@ class Game {
       );
     }
 
-    this.pacman1.drawInitialSprite();
+    //draw pacman initial sprite
+    for (let i = 0; i < this.players.lenth; i++) {
+      this.players[i].drawInitialSprite();
+    }
 
     //reset counter
     if (this.scoreDisplayCounter >= 30) {
@@ -325,13 +393,21 @@ class Game {
     if (this.scoreDisplayCounter >= 15 && this.scoreDisplayCounter < 30) {
       writeTextOnCanvas(this.ctx, '1UP', LAYOUT_MAP_ORIGINAL.tileWidth * 2, 20);
     }
-    writeTextOnCanvas(this.ctx, this.pacman1.score, LAYOUT_MAP_ORIGINAL.tileWidth * 2, 40);
+    writeTextOnCanvas(this.ctx, this.players[0].score, LAYOUT_MAP_ORIGINAL.tileWidth * 2, 40);
 
     writeTextOnCanvas(this.ctx, 'HIGH SCORE', LAYOUT_MAP_ORIGINAL.tileWidth * 8, 20);
-    writeTextOnCanvas(this.ctx, this.pacman1.score, LAYOUT_MAP_ORIGINAL.tileWidth * 10, 40);
+    writeTextOnCanvas(this.ctx, this.highScore, LAYOUT_MAP_ORIGINAL.tileWidth * 10, 40);
 
-    writeTextOnCanvas(this.ctx, '2UP', LAYOUT_MAP_ORIGINAL.tileWidth * 22, 20);
-    writeTextOnCanvas(this.ctx, 0, LAYOUT_MAP_ORIGINAL.tileWidth * 22, 40);
+    if (this.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+      writeTextOnCanvas(this.ctx, '2UP', LAYOUT_MAP_ORIGINAL.tileWidth * 22, 20);
+    }
+    else {
+      if (this.scoreDisplayCounter >= 15 && this.scoreDisplayCounter < 30) {
+        writeTextOnCanvas(this.ctx, '2UP', LAYOUT_MAP_ORIGINAL.tileWidth * 22, 20);
+      }
+    }
+    let twoPlayerScore = this.players[1] && this.players[1].score || 0;
+    writeTextOnCanvas(this.ctx, twoPlayerScore, LAYOUT_MAP_ORIGINAL.tileWidth * 22, 40);
 
     //reset counter
     if (this.scoreDisplayCounter >= 30) {
@@ -344,32 +420,56 @@ class Game {
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, GAME_HEIGHT, CANVAS_WIDTH, FOOTER_HEIGHT);
 
-    //pacman live generator
-    for (let i = 0; i < this.pacman1.lives && i < PACMAN_MAX_LIVES; i++) {
+    //pacman lives icon generator
+    for (let i = 0; i < this.players[0].lives && i < PACMAN_MAX_LIVES; i++) {
       // draw pacman lives icon
-      //(image source, source x, source y, height, width, destination x, destination y, destination height, width) 
-      this.ctx.drawImage(PACMAN_SPRITE_IMAGE, 32 * 3, 32 * 0, 32, 32, (i + 1) * 32, GAME_HEIGHT + 5, 32, 32);
+      this.ctx.drawImage(
+        PACMAN_SPRITE_IMAGE,
+        32 * 3,
+        32 * 0,
+        32,
+        32,
+        (i + 1) * 32,
+        GAME_HEIGHT + 5,
+        32,
+        32);
     }
 
-    let startingGameLevelRange, endingGameLevelRange;
+    if (this.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+      let startingGameLevelRange, endingGameLevelRange;
 
-    //game level generator
-    if (this.gameLevel < 8) {
-      startingGameLevelRange = 1;
-      endingGameLevelRange = this.gameLevel;
-    }
-    if (this.gameLevel < 19 && this.gameLevel > 7) {
-      startingGameLevelRange = this.gameLevel - 6;
-      endingGameLevelRange = this.gameLevel;
-    }
-    if (this.gameLevel > 20) {
-      startingGameLevelRange = 13;
-      endingGameLevelRange = 19;
-    }
+      //game level generator
+      if (this.gameLevel < 8) {
+        startingGameLevelRange = 1;
+        endingGameLevelRange = this.gameLevel;
+      }
+      if (this.gameLevel < 19 && this.gameLevel > 7) {
+        startingGameLevelRange = this.gameLevel - 6;
+        endingGameLevelRange = this.gameLevel;
+      }
+      if (this.gameLevel > 20) {
+        startingGameLevelRange = 13;
+        endingGameLevelRange = 19;
+      }
 
-    //game level icon generator
-    for (let i = startingGameLevelRange, xaxis = 1; i <= endingGameLevelRange; i++ , xaxis++) {
-      this.ctx.drawImage(PACMAN_SPRITE_IMAGE, 32 * GAME_LEVEL[i], 32 * 8, 32, 32, (16 * 28) - ((xaxis + 1) * 32), GAME_HEIGHT + 5, 32, 32);
+      //game level icon generator
+      for (let i = startingGameLevelRange, xaxis = 1; i <= endingGameLevelRange; i++ , xaxis++) {
+        this.ctx.drawImage(PACMAN_SPRITE_IMAGE, 32 * GAME_LEVEL[i], 32 * 8, 32, 32, (16 * 28) - ((xaxis + 1) * 32), GAME_HEIGHT + 5, 32, 32);
+      }
+    }
+    else {
+      for (let i = 0, xaxis = 1; i < this.players[1].lives && i < PACMAN_MAX_LIVES; i++ , xaxis++) {
+        this.ctx.drawImage(
+          PACMAN_SPRITE_IMAGE,
+          32 * 3,
+          32 * 0,
+          32,
+          32,
+          (16 * 28) - ((xaxis + 1) * 32),
+          GAME_HEIGHT + 5,
+          32,
+          32);
+      }
     }
   }
 

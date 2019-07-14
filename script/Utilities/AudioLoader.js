@@ -32,9 +32,20 @@ class AudioLoader {
     return this.numberOfLoadedAudios == this.numberOfAudios ? true : false;
   }
 
-  play(keyword,speed=1) {
-    this.audios[keyword].play();
-    this.audios[keyword].playbackRate=speed;
+  play(keyword, speed = 1) {
+    let promise = this.audios[keyword].play();
+
+    //only kept for solving dom exception for premise
+    if (promise !== undefined) {
+      promise.then(_ => {
+        // Autoplay started!
+      }).catch(error => {
+        // Autoplay was prevented.
+        // Show a "Play" button so that user can start playback.
+      });
+    }
+
+    this.audios[keyword].playbackRate = speed;
     this.audios[keyword].onended = () => {
       this.stop(keyword);
     };
@@ -48,10 +59,10 @@ class AudioLoader {
   playClone(keyword) {
     let currentAudioSrc = this.audios[keyword].cloneNode(false);
     currentAudioSrc.play();
-    currentAudioSrc.playbackRate=1.2;
+    currentAudioSrc.playbackRate = 1.2;
     currentAudioSrc.onended = () => {
-     currentAudioSrc.pause();
-     currentAudioSrc.currentTime = 0;
+      currentAudioSrc.pause();
+      currentAudioSrc.currentTime = 0;
     };
   }
 }

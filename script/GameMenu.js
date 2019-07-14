@@ -25,18 +25,7 @@ class GameMenu {
         positionX = 10;
         positionY = 285;
         break;
-
-      case GAME_STATE.TWO_PLAYER_MODE:
-        positionX = 10;
-        positionY = 350;
-        break;
-
-      case GAME_STATE.HIGH_SCORE_DISPLAY:
-        positionX = 10;
-        positionY = 415;
-        break;
     }
-
 
     this.ctx.strokeStyle = "#ffffff";
     this.ctx.beginPath();
@@ -72,8 +61,6 @@ class GameMenu {
     //write game menu options
     writeTextOnCanvasWithSize(this.ctx, 'Single Player Mode', 15, 'white', 20, 250);
     writeTextOnCanvasWithSize(this.ctx, 'Player VS Player Mode', 15, 'white', 20, 315);
-    writeTextOnCanvasWithSize(this.ctx, 'Two Player Mode', 15, 'white', 20, 380);
-    writeTextOnCanvasWithSize(this.ctx, 'High Scores', 15, 'white', 20, 445);
   }
 
   addGameMenuControls() {
@@ -91,7 +78,7 @@ class GameMenu {
       }
 
       if (e.keyCode === PLAYER1_CONTROL_KEY.DOWN) {
-        if (this.currentSelectedMenu != GAME_STATE.HIGH_SCORE_DISPLAY) {
+        if (this.currentSelectedMenu != GAME_STATE.PLAYER_VS_PLAYER) {
           this.currentSelectedMenu = this.currentSelectedMenu + 100;
         }
       }

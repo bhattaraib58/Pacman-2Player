@@ -4,6 +4,7 @@ class Pacman extends GameActors {
 
     this.audioLoader = audioLoader;
     this.lives = 2;
+    this.pacDead = false;
     this.gameOver = false;
     this.dotsEaten = 0;
     this.energizerEaten = 0;
@@ -11,6 +12,7 @@ class Pacman extends GameActors {
     this.score = 0;
 
     this.ghosts = null;
+    this.deadDisplayCounter = 0;
 
     //pacman key controls for moving
     this.pacmanControlKey = pacmanControlKey;
@@ -43,6 +45,8 @@ class Pacman extends GameActors {
 
     //this flag is used for hiding the ctx draw of ghost when pacman hits them
     this.hideDrawImage = false;
+
+    initialPosition = initialPosition || this.initialPosition;
 
     //set animation of pacman to left moving
     super.setSpritePosition(PACMAN_SPRITE_POSITION.NORMAL);
@@ -106,6 +110,21 @@ class Pacman extends GameActors {
         this.dimensions[0],
         this.dimensions[1]
       );
+    }
+  }
+
+  setDeadPosition() {
+    if (!this.drawPacmanDead()) {
+      this.drawInitialSprite();
+      for (let j = 0; j < this.ghosts.length; j++) {
+        this.ghosts[j].drawInitialSprite();
+      }
+      this.deadDisplayCounter++;
+      if (this.deadDisplayCounter > 100) {
+        this.initPacman();
+        this.pacDead = false;
+        this.deadDisplayCounter = 0;
+      }
     }
   }
 
@@ -187,10 +206,18 @@ class Pacman extends GameActors {
   kill() {
     this.lives -= 1;
     if (this.lives < 0) {//game over if no lives left
+      this.movingDirection = MOVING_DIRECTION.STOP;
       this.gameObject.gameMode = GAME_MODE.GAME_OVER;
     } else {
       //start new game
-      this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
+      this.movingDirection = MOVING_DIRECTION.STOP;
+
+      if (this.gameObject.gamedata.gameState == GAME_STATE.SINGLE_PLAYER) {
+        this.gameObject.gameMode = GAME_MODE.PACMAN_DEAD;
+      }
+      else {
+        this.pacDead = true;
+      }
     }
   }
 
@@ -201,7 +228,7 @@ class Pacman extends GameActors {
       this.gameMap.layoutMap.points[indexOfDot] = EMPTY_DOT_EATEN_VALUE;
       this.dotsEaten++;
       this.gameMap.dotsRemaining--;
-      this.audioLoader.play('eating',1.4);
+      this.audioLoader.play('eating', 1.2);
 
       // this.score += DOT_EATERN_SCORE; //each dot worth 10 points
       this.addScore(DOT_EATERN_SCORE);

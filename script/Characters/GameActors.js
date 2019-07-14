@@ -24,10 +24,11 @@ class GameActors {
     // the cordinates of tile the player is currently moving from-to
 
     //slice and generate new non mutating array such that the values don't override
+    this.initialPosition = initialPosition;
     this.tileFrom = initialPosition.slice(0);
     //always slice tileTo such that the tilefrom and tile to represent diffrent array locations 
     this.tileTo = initialPosition.slice(0);
-    this.previousTile=[0,0];
+    this.previousTile = [0, 0];
 
     // the time in millisecond at which character began to move
     this.timeMoved = 0;
@@ -51,6 +52,13 @@ class GameActors {
 
     //set animation object
     this.spriteAnimation = new Sprite(this.spriteXPositions[0], 5, PACMAN_SPRITES, 0);
+  }
+
+  setInitialPosition(initialPosition) {
+    this.tileFrom = initialPosition.slice(0);
+    this.tileTo = initialPosition.slice(0);
+    this.position[0] = (this.tileFrom[0] * this.gameMap.layoutMap.tileWidth) + ((this.gameMap.layoutMap.tileWidth - this.dimensions[0]) / 2);
+    this.position[1] = (this.tileFrom[1] * this.gameMap.layoutMap.tileHeight) + ((this.gameMap.layoutMap.tileHeight - this.dimensions[1]) / 2);
   }
 
   //utility functions
@@ -166,7 +174,7 @@ class GameActors {
    * @memberof GameActors
    */
   placeAt(x, y) {
-    this.previousTile=this.tileFrom.slice(0);
+    this.previousTile = this.tileFrom.slice(0);
     this.tileFrom = [x, y];
     this.tileTo = [x, y];
     this.position =
