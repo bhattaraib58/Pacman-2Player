@@ -2,7 +2,7 @@
 pacman the original classics with Two player Mode made using **plain Javascript and HTML5 canvas**.
 Download the files and run index.html to play the game, 
 or simply visit the following link.
-
+ https://bhattaraib58.github.io/Pacman-2Player/
 
 ## Controls:
 Player One
