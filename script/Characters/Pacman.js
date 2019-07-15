@@ -115,6 +115,7 @@ class Pacman extends GameActors {
 
   setDeadPosition() {
     if (!this.drawPacmanDead()) {
+      this.setInitialPosition(this.initialPosition);
       this.drawInitialSprite();
       for (let j = 0; j < this.ghosts.length; j++) {
         this.ghosts[j].drawInitialSprite();
