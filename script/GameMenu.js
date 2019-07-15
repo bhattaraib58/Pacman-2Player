@@ -3,8 +3,38 @@ class GameMenu {
     this.ctx = ctx;
     this.gameWorldObject = gameWorldObject;
     this.currentSelectedMenu = GAME_STATE.SINGLE_PLAYER;
+    this.eventAdded = false;
 
-    this.addGameMenuControls();
+    this.addGameMenuControls = (e) => {
+      if (e.keyCode == 13) {
+        this.initiateGame();
+      }
+      if (e.keyCode === PLAYER1_CONTROL_KEY.UP) {
+        if (this.currentSelectedMenu != GAME_STATE.SINGLE_PLAYER) {
+          this.currentSelectedMenu = this.currentSelectedMenu - 100;
+        }
+      }
+
+      if (e.keyCode === PLAYER1_CONTROL_KEY.DOWN) {
+        if (this.currentSelectedMenu != GAME_STATE.PLAYER_VS_PLAYER) {
+          this.currentSelectedMenu = this.currentSelectedMenu + 100;
+        }
+      }
+    };
+  }
+
+  addMenuControlEvent() {
+    if (!this.eventAdded) {
+      window.addEventListener("keydown", this.addGameMenuControls, true);
+      this.eventAdded = false;
+    }
+  }
+
+  initiateGame() {
+    window.removeEventListener('keydown', this.addGameMenuControls, true);
+    this.gameWorldObject.gameState = this.currentSelectedMenu;
+    this.gameWorldObject.resetGameComponents();
+    this.eventAdded = false;
   }
 
   draw() {
@@ -61,27 +91,5 @@ class GameMenu {
     //write game menu options
     writeTextOnCanvasWithSize(this.ctx, 'Single Player Mode', 15, 'white', 20, 250);
     writeTextOnCanvasWithSize(this.ctx, 'Player VS Player Mode', 15, 'white', 20, 315);
-  }
-
-  addGameMenuControls() {
-    // event listeners
-    window.addEventListener('keyup', (e) => {
-      if (e.keyCode == 13) {
-        this.gameWorldObject.gameState = this.currentSelectedMenu;
-        this.gameWorldObject.resetGameComponents();
-        window.removeEventListener('keyup', this.controller, true);
-      }
-      if (e.keyCode === PLAYER1_CONTROL_KEY.UP) {
-        if (this.currentSelectedMenu != GAME_STATE.SINGLE_PLAYER) {
-          this.currentSelectedMenu = this.currentSelectedMenu - 100;
-        }
-      }
-
-      if (e.keyCode === PLAYER1_CONTROL_KEY.DOWN) {
-        if (this.currentSelectedMenu != GAME_STATE.PLAYER_VS_PLAYER) {
-          this.currentSelectedMenu = this.currentSelectedMenu + 100;
-        }
-      }
-    }, false);
   }
 }

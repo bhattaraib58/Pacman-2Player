@@ -19,7 +19,7 @@ class GameWorld {
 
     // this.gameState = GAME_STATE.MENU;
     this.gameState = GAME_STATE.MENU;
-    this.gameMenu = null;
+    this.gameMenu = new GameMenu(this.ctx, this);
     this.singlePlayerGame = null;
     this.playerVsPlayerGame = null;
     this.audioLoader = null;
@@ -48,6 +48,7 @@ class GameWorld {
     if (timestamp >= this.start) {
       switch (this.gameState) {
         case GAME_STATE.MENU:
+          this.gameMenu.addMenuControlEvent();
           this.gameMenu.draw();
           break;
 
@@ -66,7 +67,6 @@ class GameWorld {
   }
 
   resetGameComponents() {
-    this.gameMenu = new GameMenu(this.ctx, this);
     this.singlePlayerGame = new Game(this.canvasElement, this.ctx, this, this.audioLoader, SINGLE_PLAYER_MODE);
     this.playerVsPlayerGame = new Game(this.canvasElement, this.ctx, this, this.audioLoader, PLAYER_VS_PLAYER_MODE);
   }
